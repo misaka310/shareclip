@@ -3,65 +3,75 @@ import { expiryOptions, type ExpiryDays, type HistoryEntry } from '../../shared/
 interface HistoryPanelProps {
   entries: HistoryEntry[];
   busyId: string | null;
+  compact?: boolean;
   onCopy: (entryId: string, expiryDays: ExpiryDays) => Promise<void>;
   onDelete: (entryId: string) => Promise<void>;
 }
 
-export function HistoryPanel({ entries, busyId, onCopy, onDelete }: HistoryPanelProps) {
+function formatSize(size: number): string {
+  if (size >= 1024 * 1024) return `${(size / 1024 / 1024).toFixed(1)} MB`;
+  return `${Math.ceil(size / 1024)} KB`;
+}
+
+export function HistoryPanel({ entries, busyId, compact = false, onCopy, onDelete }: HistoryPanelProps) {
+  const visibleEntries = compact ? entries.slice(0, 3) : entries;
+
   return (
-    <section className="panel">
-      <div className="panel__header">
+    <section className="page-card history-section">
+      <div className="section-heading section-heading--row">
         <div>
-          <p className="eyebrow">History</p>
-          <h2>Uploaded files</h2>
+          <h2>{compact ? '最近のアップロード' : 'アップロード履歴'}</h2>
+          <p>{entries.length === 0 ? 'まだアップロード履歴はありません。' : `${entries.length} 件の履歴があります。`}</p>
         </div>
-        <span className="source-chip">{entries.length} item{entries.length === 1 ? '' : 's'}</span>
       </div>
 
-      {entries.length === 0 ? (
-        <div className="history-empty">No uploads yet. Your signed links will show up here.</div>
+      {visibleEntries.length === 0 ? (
+        <div className="empty-state">アップロードするとここに履歴が表示されます。</div>
       ) : (
         <div className="history-table-wrap">
           <table className="history-table">
             <thead>
               <tr>
-                <th>File</th>
-                <th>Object key</th>
-                <th>Uploaded</th>
-                <th>Expires</th>
-                <th>Actions</th>
+                <th>ファイル名</th>
+                <th>サイズ</th>
+                <th>有効期限</th>
+                <th>作成日時</th>
+                <th>操作</th>
               </tr>
             </thead>
             <tbody>
-              {entries.map((entry) => (
+              {visibleEntries.map((entry) => (
                 <tr key={entry.id}>
                   <td>
-                    <strong>{entry.fileName}</strong>
-                    <span>{Math.ceil(entry.size / 1024)} KB</span>
+                    <div className="file-cell">
+                      <span className="file-badge">□</span>
+                      <strong>{entry.fileName}</strong>
+                    </div>
                   </td>
-                  <td>{entry.objectKey}</td>
-                  <td>{new Date(entry.uploadedAt).toLocaleString()}</td>
+                  <td>{formatSize(entry.size)}</td>
                   <td>{new Date(entry.signedUrlExpiresAt).toLocaleString()}</td>
+                  <td>{new Date(entry.uploadedAt).toLocaleString()}</td>
                   <td>
                     <div className="history-actions">
                       {expiryOptions.map((expiry) => (
                         <button
                           key={expiry}
-                          className={entry.expiryDays === expiry ? 'pill pill--active' : 'pill'}
+                          className="icon-button"
                           type="button"
                           onClick={() => onCopy(entry.id, expiry)}
                           disabled={busyId === entry.id}
+                          title={`${expiry}日で再発行`}
                         >
-                          {expiry}d
+                          {expiry}日
                         </button>
                       ))}
                       <button
-                        className="button button--ghost"
+                        className="icon-button icon-button--danger"
                         type="button"
                         onClick={() => onDelete(entry.id)}
                         disabled={busyId === entry.id}
                       >
-                        Delete
+                        削除
                       </button>
                     </div>
                   </td>

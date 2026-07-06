@@ -20,13 +20,13 @@ export function SettingsPanel({ initialConfig, sourceLabel, busy, onSave }: Sett
   };
 
   return (
-    <section className="panel">
-      <div className="panel__header">
+    <section className="page-card settings-panel">
+      <div className="section-heading section-heading--row">
         <div>
-          <p className="eyebrow">Settings</p>
-          <h2>Storage settings</h2>
+          <h2>設定</h2>
+          <p>Oracle Object Storage の接続情報を設定します。</p>
         </div>
-        <span className="source-chip">Source: {sourceLabel}</span>
+        <span className="badge">{sourceLabel}</span>
       </div>
 
       <div className="settings-grid">
@@ -87,11 +87,9 @@ export function SettingsPanel({ initialConfig, sourceLabel, busy, onSave }: Sett
         </label>
       </div>
 
-      <div className="actions">
-        <button className="button" type="button" onClick={() => onSave(form)} disabled={busy}>
-          {busy ? 'Saving...' : 'Save settings'}
-        </button>
-      </div>
+      <button className="button button--primary" type="button" onClick={() => onSave(form)} disabled={busy}>
+        {busy ? '保存中...' : '設定を保存'}
+      </button>
     </section>
   );
 }

@@ -12,13 +12,16 @@ interface UploadPanelProps {
 
 type ElectronFile = File & { path?: string };
 
+function formatSize(size: number): string {
+  if (size >= 1024 * 1024) return `${(size / 1024 / 1024).toFixed(1)} MB`;
+  return `${Math.ceil(size / 1024)} KB`;
+}
+
 export function UploadPanel({ file, expiryDays, busy, onPick, onUpload, onChangeExpiry, onDropFile }: UploadPanelProps) {
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     const dropped = event.dataTransfer.files[0] as ElectronFile | undefined;
-    if (!dropped?.path) {
-      return;
-    }
+    if (!dropped?.path) return;
 
     onDropFile({
       filePath: dropped.path,
@@ -30,44 +33,57 @@ export function UploadPanel({ file, expiryDays, busy, onPick, onUpload, onChange
   };
 
   return (
-    <section className="panel">
-      <div className="panel__header">
-        <div>
-          <p className="eyebrow">Temporary Upload</p>
-          <h2>Upload a file and copy a signed link</h2>
+    <section className="page-card upload-page">
+      <div className="section-heading">
+        <h1>アップロード</h1>
+        <p>ファイルを一時的に共有するためのリンクを生成します。</p>
+      </div>
+
+      <div className="drop-zone" onDragOver={(event) => event.preventDefault()} onDrop={handleDrop}>
+        <div className="upload-cloud">↑</div>
+        <strong>ファイルをドラッグ&ドロップ</strong>
+        <span>または</span>
+        <button className="button button--secondary" type="button" onClick={onPick} disabled={busy}>
+          ファイルを選択
+        </button>
+      </div>
+
+      {file ? (
+        <div className="selected-file">
+          <div className="file-icon">□</div>
+          <div>
+            <strong>{file.fileName}</strong>
+            <span>{formatSize(file.size)}</span>
+          </div>
+          <button className="icon-button" type="button" onClick={onPick} disabled={busy} aria-label="ファイルを変更">
+            変更
+          </button>
         </div>
-        <div className="pill-group">
+      ) : null}
+
+      <div className="form-block">
+        <strong>有効期限</strong>
+        <div className="segmented-control">
           {expiryOptions.map((option) => (
             <button
               key={option}
-              className={option === expiryDays ? 'pill pill--active' : 'pill'}
+              className={option === expiryDays ? 'segment segment--active' : 'segment'}
               type="button"
               onClick={() => onChangeExpiry(option)}
+              disabled={busy}
             >
-              {option} day{option > 1 ? 's' : ''}
+              {option}日
             </button>
           ))}
+          <button className="segment segment--disabled" type="button" disabled title="S3互換の署名付きURLは最大7日です">
+            30日
+          </button>
         </div>
       </div>
 
-      <div className="drop-card" onDragOver={(event) => event.preventDefault()} onDrop={handleDrop}>
-        <div>
-          <strong>{file ? file.fileName : 'Drop a file here or choose one manually'}</strong>
-          <p>
-            {file
-              ? `${Math.ceil(file.size / 1024)} KB ready for upload`
-              : 'Drag a local file onto this card, then upload and copy the signed link.'}
-          </p>
-        </div>
-        <div className="actions">
-          <button className="button button--secondary" type="button" onClick={onPick} disabled={busy}>
-            Choose file
-          </button>
-          <button className="button" type="button" onClick={onUpload} disabled={busy || !file}>
-            {busy ? 'Uploading...' : 'Upload and copy link'}
-          </button>
-        </div>
-      </div>
+      <button className="button button--primary button--wide" type="button" onClick={onUpload} disabled={busy || !file}>
+        {busy ? 'アップロード中...' : 'アップロードしてリンク生成'}
+      </button>
     </section>
   );
 }

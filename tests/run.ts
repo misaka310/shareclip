@@ -128,12 +128,12 @@ async function testShareService() {
 
 function testRendererShell() {
   const markup = renderToStaticMarkup(createElement(App));
-  assert.match(markup, /Upload/);
-  assert.match(markup, /History/);
-  assert.match(markup, /Settings/);
-  assert.match(markup, /Latest link copied to clipboard/);
-  assert.match(markup, /Drop a file here or choose one manually/);
-  assert.match(markup, /Ready to upload|Configuration required/);
+  assert.match(markup, /アップロード/);
+  assert.match(markup, /履歴/);
+  assert.match(markup, /設定/);
+  assert.match(markup, /ファイルをドラッグ&amp;ドロップ/);
+  assert.match(markup, /アップロードしてリンク生成/);
+  assert.match(markup, /最近のアップロード/);
 }
 
 async function main() {

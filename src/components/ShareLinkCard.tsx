@@ -5,27 +5,23 @@ interface ShareLinkCardProps {
 }
 
 export function ShareLinkCard({ entry }: ShareLinkCardProps) {
+  if (!entry) return null;
+
   return (
-    <section className="panel">
-      <div className="panel__header">
+    <section className="page-card share-result">
+      <div className="result-heading">
+        <div className="check-icon">✓</div>
         <div>
-          <p className="eyebrow">Share Link</p>
-          <h2>Latest link copied to clipboard</h2>
+          <h2>共有リンク</h2>
+          <p>有効期限: {new Date(entry.signedUrlExpiresAt).toLocaleString()}</p>
         </div>
       </div>
-
-      {entry ? (
-        <div className="share-card">
-          <div className="share-card__meta">
-            <strong>{entry.fileName}</strong>
-            <span>Expires {new Date(entry.signedUrlExpiresAt).toLocaleString()}</span>
-          </div>
-          <p className="share-card__hint">Full URL was copied by the app. This preview masks credential-like query values.</p>
-          <code className="share-card__url">{entry.signedUrl}</code>
-        </div>
-      ) : (
-        <div className="history-empty">Upload a file or refresh a history row to surface the current signed link here.</div>
-      )}
+      <div className="link-row">
+        <input value={entry.signedUrl} readOnly aria-label="共有リンク" />
+        <button className="button button--secondary" type="button">
+          コピー済み
+        </button>
+      </div>
     </section>
   );
 }

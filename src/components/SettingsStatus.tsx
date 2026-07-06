@@ -11,29 +11,23 @@ export function SettingsStatus({ config, sourceLabel }: SettingsStatusProps) {
   const ready = errors.length === 0;
 
   return (
-    <section className="panel">
-      <div className="panel__header">
+    <section className="page-card settings-status">
+      <div className="section-heading section-heading--row">
         <div>
-          <p className="eyebrow">Settings Status</p>
-          <h2>{ready ? 'Ready to upload' : 'Configuration required'}</h2>
+          <h2>{ready ? '接続準備OK' : '設定が必要です'}</h2>
+          <p>設定元: {sourceLabel}</p>
         </div>
-        <span className={ready ? 'source-chip source-chip--success' : 'source-chip source-chip--warning'}>
-          {ready ? 'Ready' : `${errors.length} issue${errors.length === 1 ? '' : 's'}`}
-        </span>
+        <span className={ready ? 'badge badge--success' : 'badge badge--warning'}>{ready ? 'OK' : `${errors.length}件`}</span>
       </div>
 
       <div className="status-list">
         <div className="status-row">
-          <span>Source</span>
-          <strong>{sourceLabel}</strong>
-        </div>
-        <div className="status-row">
           <span>Bucket</span>
-          <strong>{config.bucket || 'Not set'}</strong>
+          <strong>{config.bucket || '未設定'}</strong>
         </div>
         <div className="status-row">
           <span>Endpoint</span>
-          <strong>{config.endpoint || 'Not set'}</strong>
+          <strong>{config.endpoint || '未設定'}</strong>
         </div>
       </div>
 
