@@ -32,6 +32,8 @@ config/shareclip.config.example.json
 2. `config/shareclip.config.local.json`
 3. アプリ内の初期値
 
+UI で設定を保存すると、それ以降は保存済み設定が `config/shareclip.config.local.json` より優先されます。ローカルJSONを直したのに画面へ反映されない場合は、アプリ内の設定を保存し直してください。
+
 UIから設定保存した場合は、Electron の user data 側にも設定が保存されます。そこには認証情報が含まれ得るため、ローカル秘密情報として扱ってください。
 
 ## バリデーション

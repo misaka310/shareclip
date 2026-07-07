@@ -4,7 +4,7 @@
   "private": true,
   "description": "Temporary file sharing uploader for Oracle Object Storage S3-compatible buckets.",
   "main": "dist-electron/electron/main.js",
-  "author": "OpenAI Codex",
+  "author": "misaka310",
   "license": "MIT",
   "scripts": {
     "dev": "npm run build && electron .",

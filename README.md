@@ -1,23 +1,25 @@
 # ShareClip
 
-ShareClip は、Oracle Cloud Infrastructure Object Storage を S3互換APIで使う、一時ファイル共有用のWindowsデスクトップアプリです。
+ShareClip は、自分の Oracle Cloud Infrastructure Object Storage バケットを使って、一時共有リンクを作る Windows デスクトップアプリです。
 
-ローカルファイルを選び、1日・3日・7日の期限を選ぶと、OCIバケットへアップロードして署名付きダウンロードURLをクリップボードへコピーします。受け取る側はOCIアカウント不要で、URLから直接ダウンロードできます。
+ファイルを選び、1日・3日・7日の期限を選ぶと、OCI バケットへアップロードして署名付きダウンロード URL を作ります。受け取る側は OCI アカウント不要で、URL から直接ダウンロードできます。
 
 ## 主な機能
 
-- ファイル選択とドラッグ&ドロップアップロード
+- ファイル選択またはドラッグ&ドロップでアップロード
 - 署名付きURLの期限は 1日 / 3日 / 7日 のみ
 - 最大期限は 604800秒、つまり7日で強制
 - `Content-Disposition: attachment` を付けて、可能な限りブラウザ表示ではなくダウンロードに寄せる
 - アップロード履歴の保存
 - 履歴からリンク再発行
 - 履歴からリモートオブジェクト削除
-- full URL はElectron main process側でクリップボードへコピー
-- 画面上のURLプレビューではcredential風のクエリ値をマスク
+- 共有リンク画面や履歴から、後でリンクを再コピー
+- 履歴の 1日 / 3日 / 7日 は、新しい期限のリンクを再発行してコピー
 - `config/shareclip.config.local.json` はGit管理対象外
 
 ## セットアップ
+
+先に OCI 側で Object Storage バケット、Namespace、Customer Secret Key、対象バケットへの Object 操作権限を用意してください。詳しい手順は `docs/oracle-setup.md` です。
 
 ### 1. 依存関係を入れる
 
@@ -47,16 +49,18 @@ copy config\shareclip.config.example.json config\shareclip.config.local.json
 }
 ```
 
-大阪リージョンで、namespace が `axqnj0ucnp3e` の場合は endpoint が次になります。
+大阪リージョンで、namespace が `your-namespace` の場合は endpoint が次になります。
 
 ```json
-"endpoint": "https://axqnj0ucnp3e.compat.objectstorage.ap-osaka-1.oraclecloud.com",
+"endpoint": "https://your-namespace.compat.objectstorage.ap-osaka-1.oraclecloud.com",
 "region": "ap-osaka-1"
 ```
 
 OCIのS3互換endpointでは、bucket名をサブドメインにすると証明書エラーになる場合があります。ShareClipは `.compat.objectstorage.` endpoint では自動的に path-style request を使います。
 
 ## 動作確認
+
+通常はアプリ画面で、ファイル選択またはドラッグ&ドロップ、アップロード、リンクのブラウザ確認、履歴からのコピー/再発行/削除を確認します。OCI 設定だけを先に切り分けたい場合は `npm run storage:check` を使います。
 
 ### まとめて確認
 
@@ -107,12 +111,15 @@ npm run dev
 
 起動後の確認手順:
 
-1. `Upload` 画面でファイルを選ぶ
-2. 期限を `1 day` / `3 days` / `7 days` から選ぶ
-3. `Upload and copy link` を押す
-4. クリップボードにURLがコピーされる
-5. ブラウザのシークレットウィンドウなどでURLを開き、ファイルがダウンロードできるか確認する
-6. `History` からリンク再発行またはリモート削除を確認する
+1. `アップロード` 画面でファイルを選ぶ、またはドラッグ&ドロップする
+2. 期限を `1日` / `3日` / `7日` から選ぶ
+3. `アップロードしてリンク生成` を押す
+4. クリップボードに URL がコピーされる
+5. ブラウザのシークレットウィンドウなどで URL を開き、ファイルがダウンロードできるか確認する
+6. `共有リンク` の `コピー` で、同じ URL を後から再コピーできることを確認する
+7. `履歴` の `コピー` で、履歴から同じ URL を再コピーできることを確認する
+8. `履歴` の `1日` / `3日` / `7日` で、新しい期限の URL を再発行してコピーできることを確認する
+9. `履歴` の `削除` で、OCI 上のファイルを削除できることを確認する
 
 ## セキュリティ
 

@@ -40,8 +40,10 @@ Allow group ShareClipObjectUsers to manage objects in tenancy where target.bucke
 1. `config/shareclip.config.example.json` を `config/shareclip.config.local.json` にコピーする
 2. OCIの値を入れる
 3. `npm run storage:check` を実行する
+4. `npm run dev` でアプリを起動し、実際にファイルを1つアップロードする
+5. コピーされた URL をシークレットウィンドウで開き、ダウンロードできることを確認する
 
-成功すれば、バケット接続、アップロード、署名付きURL生成、ダウンロード、削除まで通っています。
+`storage:check` が成功すれば、バケット接続、アップロード、署名付きURL生成、ダウンロード、削除まで通っています。GUIの確認はその後に行います。
 
 ## 注意
 
