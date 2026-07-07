@@ -242,6 +242,12 @@ button { border: 0; }
   border-color: var(--line);
   color: #374151;
 }
+.button--copied {
+  min-width: 132px;
+  border-color: #b7e4c8;
+  background: #f2fbf5;
+  color: #17683c;
+}
 .button--wide { width: 100%; margin-top: 20px; min-height: 52px; font-size: 1.05rem; }
 .button:disabled { opacity: 0.55; cursor: not-allowed; }
 
@@ -292,11 +298,18 @@ button { border: 0; }
   background: #fff;
   color: #374151;
   border-radius: 7px;
+  min-width: 72px;
   padding: 8px 10px;
   cursor: pointer;
   font-weight: 700;
 }
 .icon-button--danger { color: var(--red); }
+.icon-button--copied {
+  min-width: 116px;
+  border-color: #b7e4c8;
+  background: #f2fbf5;
+  color: #17683c;
+}
 .empty-state {
   border: 1px dashed var(--line);
   border-radius: 8px;

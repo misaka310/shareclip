@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { defaultConfig, validateConfig } from '../shared/config';
 import type { ConfigLoadResult, ExpiryDays, HistoryEntry, ShareClipConfig, UploadInput } from '../shared/types';
 import { HistoryPanel } from './components/HistoryPanel';
@@ -38,8 +38,22 @@ export default function App() {
   const [pickBusy, setPickBusy] = useState(false);
   const [settingsBusy, setSettingsBusy] = useState(false);
   const [historyBusyId, setHistoryBusyId] = useState<string | null>(null);
+  const [copiedEntryId, setCopiedEntryId] = useState<string | null>(null);
+  const copyNoticeTimerRef = useRef<number | null>(null);
 
   const storageReady = useMemo(() => validateConfig(config).length === 0, [config]);
+
+  const showCopiedNotice = (entryId: string) => {
+    if (copyNoticeTimerRef.current) {
+      window.clearTimeout(copyNoticeTimerRef.current);
+    }
+
+    setCopiedEntryId(entryId);
+    copyNoticeTimerRef.current = window.setTimeout(() => {
+      setCopiedEntryId(null);
+      copyNoticeTimerRef.current = null;
+    }, 1800);
+  };
 
   useEffect(() => {
     void (async () => {
@@ -58,18 +72,30 @@ export default function App() {
         });
       }
     })();
+
+    return () => {
+      if (copyNoticeTimerRef.current) {
+        window.clearTimeout(copyNoticeTimerRef.current);
+        copyNoticeTimerRef.current = null;
+      }
+    };
   }, []);
 
   const pickFile = async () => {
     if (pickBusy) return;
 
     setPickBusy(true);
-    const selected = await assertBridge().chooseFile();
-    if (!selected) { setPickBusy(false); return; };
+    try {
+      const selected = await assertBridge().chooseFile();
+      if (!selected) return;
 
-    setFile({ ...selected, expiryDays });
-    setStatus({ tone: 'idle', message: `${selected.fileName} を選択しました。` });
-    setPickBusy(false);
+      setFile({ ...selected, expiryDays });
+      setStatus({ tone: 'idle', message: `${selected.fileName} を選択しました。` });
+    } catch (error) {
+      setStatus({ tone: 'error', message: error instanceof Error ? error.message : 'ファイル選択に失敗しました。' });
+    } finally {
+      setPickBusy(false);
+    }
   };
 
   const prepareDroppedFile = (selected: UploadInput) => {
@@ -86,6 +112,7 @@ export default function App() {
       const uploaded = await assertBridge().uploadFile({ ...file, expiryDays });
       setHistory((current) => [uploaded, ...current.filter((entry) => entry.id !== uploaded.id)]);
       setLatestShared(uploaded);
+      showCopiedNotice(uploaded.id);
       setFile(null);
       setStatus({ tone: 'success', message: `${uploaded.fileName} をアップロードし、リンクをコピーしました。` });
     } catch (error) {
@@ -114,6 +141,7 @@ export default function App() {
     try {
       const copied = await assertBridge().copyCurrentLink(entryId);
       setLatestShared(copied);
+      showCopiedNotice(entryId);
       setStatus({ tone: 'success', message: 'リンクをコピーしました。' });
     } catch (error) {
       setStatus({ tone: 'error', message: error instanceof Error ? error.message : 'リンクのコピーに失敗しました。' });
@@ -128,6 +156,7 @@ export default function App() {
       const updated = await assertBridge().copyLink(entryId, nextExpiry);
       setHistory((current) => current.map((entry) => (entry.id === updated.id ? updated : entry)));
       setLatestShared(updated);
+      showCopiedNotice(updated.id);
       setStatus({ tone: 'success', message: `${nextExpiry}日リンクを再発行してコピーしました。` });
     } catch (error) {
       setStatus({ tone: 'error', message: error instanceof Error ? error.message : 'リンク再発行に失敗しました。' });
@@ -142,6 +171,14 @@ export default function App() {
       const nextHistory = await assertBridge().deleteEntry(entryId);
       setHistory(nextHistory);
       setLatestShared((current) => (current?.id === entryId ? nextHistory[0] ?? null : current));
+      setCopiedEntryId((current) => {
+        if (current !== entryId) return current;
+        if (copyNoticeTimerRef.current) {
+          window.clearTimeout(copyNoticeTimerRef.current);
+          copyNoticeTimerRef.current = null;
+        }
+        return null;
+      });
       setStatus({ tone: 'success', message: 'リモートファイルを削除し、履歴を更新しました。' });
     } catch (error) {
       setStatus({ tone: 'error', message: error instanceof Error ? error.message : '削除に失敗しました。' });
@@ -167,19 +204,39 @@ export default function App() {
             <UploadPanel
               file={file}
               expiryDays={expiryDays}
-              busy={uploadBusy}
+              busy={uploadBusy || pickBusy}
               onPick={pickFile}
               onUpload={uploadFile}
               onChangeExpiry={setExpiryDays}
               onDropFile={prepareDroppedFile}
             />
-            <ShareLinkCard entry={latestShared} busy={historyBusyId === latestShared?.id} onCopyCurrent={copyCurrentLink} />
-            <HistoryPanel entries={history} busyId={historyBusyId} compact onCopyCurrent={copyCurrentLink} onRegenerate={copyLink} onDelete={deleteEntry} />
+            <ShareLinkCard
+              entry={latestShared}
+              busy={historyBusyId === latestShared?.id}
+              copied={copiedEntryId === latestShared?.id}
+              onCopyCurrent={copyCurrentLink}
+            />
+            <HistoryPanel
+              entries={history}
+              busyId={historyBusyId}
+              copiedEntryId={copiedEntryId}
+              compact
+              onCopyCurrent={copyCurrentLink}
+              onRegenerate={copyLink}
+              onDelete={deleteEntry}
+            />
           </>
         ) : null}
 
         {activeSection === 'history' ? (
-          <HistoryPanel entries={history} busyId={historyBusyId} onCopyCurrent={copyCurrentLink} onRegenerate={copyLink} onDelete={deleteEntry} />
+          <HistoryPanel
+            entries={history}
+            busyId={historyBusyId}
+            copiedEntryId={copiedEntryId}
+            onCopyCurrent={copyCurrentLink}
+            onRegenerate={copyLink}
+            onDelete={deleteEntry}
+          />
         ) : null}
 
         {activeSection === 'settings' ? (

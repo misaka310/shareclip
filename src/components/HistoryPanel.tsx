@@ -3,6 +3,7 @@ import { expiryOptions, type ExpiryDays, type HistoryEntry } from '../../shared/
 interface HistoryPanelProps {
   entries: HistoryEntry[];
   busyId: string | null;
+  copiedEntryId: string | null;
   compact?: boolean;
   onCopyCurrent: (entryId: string) => Promise<void>;
   onRegenerate: (entryId: string, expiryDays: ExpiryDays) => Promise<void>;
@@ -14,7 +15,7 @@ function formatSize(size: number): string {
   return `${Math.ceil(size / 1024)} KB`;
 }
 
-export function HistoryPanel({ entries, busyId, compact = false, onCopyCurrent, onRegenerate, onDelete }: HistoryPanelProps) {
+export function HistoryPanel({ entries, busyId, copiedEntryId, compact = false, onCopyCurrent, onRegenerate, onDelete }: HistoryPanelProps) {
   const visibleEntries = compact ? entries.slice(0, 3) : entries;
 
   return (
@@ -41,47 +42,51 @@ export function HistoryPanel({ entries, busyId, compact = false, onCopyCurrent, 
               </tr>
             </thead>
             <tbody>
-              {visibleEntries.map((entry) => (
-                <tr key={entry.id}>
-                  <td>
-                    <div className="file-cell">
-                      <span className="file-badge">□</span>
-                      <strong>{entry.fileName}</strong>
-                    </div>
-                  </td>
-                  <td>{formatSize(entry.size)}</td>
-                  <td>{new Date(entry.signedUrlExpiresAt).toLocaleString()}</td>
-                  <td>{new Date(entry.uploadedAt).toLocaleString()}</td>
-                  <td>
-                    <div className="history-actions">
-                      <button className="icon-button icon-button--primary" type="button" onClick={() => onCopyCurrent(entry.id)} disabled={busyId === entry.id}>
-                        コピー
-                      </button>
-                      <span className="history-actions__label">再発行</span>
-                      {expiryOptions.map((expiry) => (
-                        <button
-                          key={expiry}
-                          className="icon-button"
-                          type="button"
-                          onClick={() => onRegenerate(entry.id, expiry)}
-                          disabled={busyId === entry.id}
-                          title={`${expiry}日で再発行`}
-                        >
-                          {expiry}日
+              {visibleEntries.map((entry) => {
+                const copied = copiedEntryId === entry.id;
+
+                return (
+                  <tr key={entry.id}>
+                    <td>
+                      <div className="file-cell">
+                        <span className="file-badge">□</span>
+                        <strong>{entry.fileName}</strong>
+                      </div>
+                    </td>
+                    <td>{formatSize(entry.size)}</td>
+                    <td>{new Date(entry.signedUrlExpiresAt).toLocaleString()}</td>
+                    <td>{new Date(entry.uploadedAt).toLocaleString()}</td>
+                    <td>
+                      <div className="history-actions">
+                        <button className={copied ? 'icon-button icon-button--primary icon-button--copied' : 'icon-button icon-button--primary'} type="button" onClick={() => onCopyCurrent(entry.id)} disabled={busyId === entry.id}>
+                          <span aria-live="polite">{copied ? 'コピーしました' : 'コピー'}</span>
                         </button>
-                      ))}
-                      <button
-                        className="icon-button icon-button--danger"
-                        type="button"
-                        onClick={() => onDelete(entry.id)}
-                        disabled={busyId === entry.id}
-                      >
-                        削除
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                        <span className="history-actions__label">再発行</span>
+                        {expiryOptions.map((expiry) => (
+                          <button
+                            key={expiry}
+                            className="icon-button"
+                            type="button"
+                            onClick={() => onRegenerate(entry.id, expiry)}
+                            disabled={busyId === entry.id}
+                            title={`${expiry}日で再発行`}
+                          >
+                            {expiry}日
+                          </button>
+                        ))}
+                        <button
+                          className="icon-button icon-button--danger"
+                          type="button"
+                          onClick={() => onDelete(entry.id)}
+                          disabled={busyId === entry.id}
+                        >
+                          削除
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

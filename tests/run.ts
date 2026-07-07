@@ -5,7 +5,9 @@ import { removeHistoryEntry, sortHistory, upsertHistoryEntry } from '../shared/h
 import { buildObjectKey, resolveExpiresInSeconds, ShareService } from '../electron/services/shareService';
 import { renderToStaticMarkup } from 'react-dom/server';
 import App from '../src/App';
-import type { HistoryEntry, ShareClipConfig } from '../shared/types';
+import { ShareLinkCard } from '../src/components/ShareLinkCard';
+import { HistoryPanel } from '../src/components/HistoryPanel';
+import type { ExpiryDays, HistoryEntry, ShareClipConfig } from '../shared/types';
 
 const baseEntry = (id: string, uploadedAt: string): HistoryEntry => ({
   id,
@@ -134,6 +136,30 @@ function testRendererShell() {
   assert.match(markup, /ファイルをドラッグ&amp;ドロップ/);
   assert.match(markup, /アップロードしてリンク生成/);
   assert.match(markup, /最近のアップロード/);
+  assert.doesNotMatch(markup, /コピーしました/);
+
+  const entry = baseEntry('copied', '2026-07-03T00:00:00.000Z');
+  const shareCard = renderToStaticMarkup(
+    createElement(ShareLinkCard, {
+      entry,
+      busy: false,
+      copied: true,
+      onCopyCurrent: async (_entryId: string) => undefined
+    })
+  );
+  assert.match(shareCard, /コピーしました/);
+
+  const historyPanel = renderToStaticMarkup(
+    createElement(HistoryPanel, {
+      entries: [entry],
+      busyId: null,
+      copiedEntryId: entry.id,
+      onCopyCurrent: async (_entryId: string) => undefined,
+      onRegenerate: async (_entryId: string, _expiryDays: ExpiryDays) => undefined,
+      onDelete: async (_entryId: string) => undefined
+    })
+  );
+  assert.match(historyPanel, /コピーしました/);
 }
 
 async function main() {

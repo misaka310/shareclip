@@ -3,10 +3,11 @@ import type { HistoryEntry } from '../../shared/types';
 interface ShareLinkCardProps {
   entry: HistoryEntry | null;
   busy: boolean;
+  copied: boolean;
   onCopyCurrent: (entryId: string) => Promise<void>;
 }
 
-export function ShareLinkCard({ entry, busy, onCopyCurrent }: ShareLinkCardProps) {
+export function ShareLinkCard({ entry, busy, copied, onCopyCurrent }: ShareLinkCardProps) {
   if (!entry) return null;
 
   return (
@@ -19,9 +20,9 @@ export function ShareLinkCard({ entry, busy, onCopyCurrent }: ShareLinkCardProps
         </div>
       </div>
       <div className="link-row">
-        <input value={entry.signedUrl} readOnly aria-label="共有リンク" />
-        <button className="button button--secondary" type="button" onClick={() => onCopyCurrent(entry.id)} disabled={busy}>
-          コピー
+        <input value={entry.signedUrl} readOnly aria-label="共有リンク" data-testid="share-link-input" />
+        <button className={copied ? 'button button--secondary button--copied' : 'button button--secondary'} type="button" onClick={() => onCopyCurrent(entry.id)} disabled={busy}>
+          <span aria-live="polite">{copied ? 'コピーしました' : 'コピー'}</span>
         </button>
       </div>
     </section>
