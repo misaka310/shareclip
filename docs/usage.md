@@ -8,9 +8,9 @@
 Start-ShareClip.bat
 ```
 
-このbatが Node.js / npm の確認、初回 `npm install`、アプリ起動まで行います。
+このbatは、初回だけ exe を作ってから起動します。2回目以降は作成済みの exe をそのまま起動します。
 
-コマンドで起動したい場合は次です。
+コマンドで開発起動したい場合は次です。
 
 ```bash
 npm install
@@ -59,12 +59,12 @@ npm run dev
 
 UI から保存した設定は Electron の user data にも保存されます。
 
-## 配布用 exe を作る
+## 開発者向け: 配布用 exe を作り直す
 
-配布用フォルダを作る場合は、次のbatをダブルクリックします。
+通常利用では `Start-ShareClip.bat` だけで十分です。配布用フォルダだけを作り直したい場合は、次を実行します。
 
 ```text
-Build-ShareClip.bat
+tools\Build-ShareClip.bat
 ```
 
 成功すると `release\ShareClip-win32-x64\ShareClip.exe` ができます。`ShareClip.exe` だけを抜き出さず、`ShareClip-win32-x64` フォルダごと使ってください。

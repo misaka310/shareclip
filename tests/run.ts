@@ -165,14 +165,15 @@ function testRendererShell() {
 
 function testWindowsBatEntryPoints() {
   assert.equal(existsSync('Start-ShareClip.bat'), true);
-  assert.equal(existsSync('Build-ShareClip.bat'), true);
+  assert.equal(existsSync('tools/Build-ShareClip.bat'), true);
 
   const startBat = readFileSync('Start-ShareClip.bat', 'utf8');
+  assert.match(startBat, /release\\ShareClip-win32-x64\\ShareClip\.exe/);
   assert.match(startBat, /npm install/);
-  assert.match(startBat, /npm run dev/);
-  assert.match(startBat, /Node\.js/);
+  assert.match(startBat, /npm run dist/);
+  assert.match(startBat, /start "" "%APP_EXE%"/);
 
-  const buildBat = readFileSync('Build-ShareClip.bat', 'utf8');
+  const buildBat = readFileSync('tools/Build-ShareClip.bat', 'utf8');
   assert.match(buildBat, /npm install/);
   assert.match(buildBat, /npm run dist/);
   assert.match(buildBat, /ShareClip\.exe/);

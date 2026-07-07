@@ -31,9 +31,13 @@ Start-ShareClip.bat
 
 このbatが次をまとめて行います。
 
-1. Node.js / npm があるか確認する
-2. 初回だけ `npm install` を実行する
-3. `npm run dev` で ShareClip を起動する
+1. `release\ShareClip-win32-x64\ShareClip.exe` があれば、その exe を起動する
+2. exe がなければ Node.js / npm を確認する
+3. 初回だけ `npm install` を実行する
+4. `npm run dist` で exe を作る
+5. 作成した `ShareClip.exe` を起動する
+
+2回目以降は、既に作成済みの exe をそのまま起動します。
 
 Node.js が入っていない場合は、Node.js LTS を入れてからもう一度 `Start-ShareClip.bat` を実行してください。
 
@@ -62,12 +66,12 @@ https://your-namespace.compat.objectstorage.ap-osaka-1.oraclecloud.com
 
 OCIのS3互換endpointでは、bucket名をサブドメインにすると証明書エラーになる場合があります。ShareClipは `.compat.objectstorage.` endpoint では自動的に path-style request を使います。
 
-## 配布用 exe を作る
+## 開発者向け: 配布用 exe を作り直す
 
-配布用フォルダを作りたい場合は、次をダブルクリックします。
+通常利用では `Start-ShareClip.bat` だけで十分です。配布用フォルダだけを作り直したい場合は、次を実行します。
 
 ```text
-Build-ShareClip.bat
+tools\Build-ShareClip.bat
 ```
 
 成功すると次ができます。
@@ -80,7 +84,7 @@ release\ShareClip-win32-x64\ShareClip.exe
 
 ## コマンドで起動したい場合
 
-batを使わずにコマンドで起動する場合は次です。
+batを使わずに開発起動する場合は次です。
 
 ```bash
 npm install

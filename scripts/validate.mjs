@@ -14,7 +14,8 @@ const required = [
   'shared/config.ts',
   'shared/types.ts',
   'Start-ShareClip.bat',
-  'Build-ShareClip.bat',
+  'tools/Build-ShareClip.bat',
+  'scripts/package-win.mjs',
   'README.md',
   'SECURITY.md',
   'docs/usage.md',
@@ -36,18 +37,18 @@ for (const forbidden of ['secretAccessKey": "lD', 'accessKeyId": "fc', 'ocid1.']
 }
 
 const readme = readFileSync('README.md', 'utf8');
-for (const expected of ['Start-ShareClip.bat', 'Build-ShareClip.bat', '設定画面', 'JSON 手編集は自動化や開発者向けの任意手順']) {
+for (const expected of ['Start-ShareClip.bat', 'tools\\Build-ShareClip.bat', '設定画面', '2回目以降は、既に作成済みの exe をそのまま起動します', 'JSON 手編集は自動化や開発者向けの任意手順']) {
   if (!readme.includes(expected)) throw new Error(`README must explain ${expected}`);
 }
 
 const startBat = readFileSync('Start-ShareClip.bat', 'utf8');
-for (const expected of ['npm install', 'npm run dev', 'Node.js']) {
+for (const expected of ['release\\ShareClip-win32-x64\\ShareClip.exe', 'npm install', 'npm run dist', 'start "" "%APP_EXE%"']) {
   if (!startBat.includes(expected)) throw new Error(`Start-ShareClip.bat must include ${expected}`);
 }
 
-const buildBat = readFileSync('Build-ShareClip.bat', 'utf8');
+const buildBat = readFileSync('tools/Build-ShareClip.bat', 'utf8');
 for (const expected of ['npm install', 'npm run dist', 'ShareClip.exe']) {
-  if (!buildBat.includes(expected)) throw new Error(`Build-ShareClip.bat must include ${expected}`);
+  if (!buildBat.includes(expected)) throw new Error(`tools/Build-ShareClip.bat must include ${expected}`);
 }
 
 console.log('ShareClip validate checks passed.');

@@ -1,6 +1,6 @@
 @echo off
 setlocal
-cd /d "%~dp0"
+cd /d "%~dp0\.."
 title ShareClip build
 
 echo.
@@ -30,7 +30,7 @@ if errorlevel 1 (
 
 if not exist package.json (
   echo [ERROR] package.json was not found.
-  echo Run this bat from the ShareClip repository root.
+  echo Run this bat from inside the ShareClip repository.
   echo.
   pause
   exit /b 1

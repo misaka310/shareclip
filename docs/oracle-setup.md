@@ -38,10 +38,13 @@ Allow group ShareClipObjectUsers to manage objects in tenancy where target.bucke
 ## ShareClip側でやること
 
 1. `Start-ShareClip.bat` をダブルクリックする
-2. 初回表示された `設定` 画面に OCI の値を入れる
-3. `設定を保存` を押す
-4. `アップロード` で実際にファイルを1つアップロードする
-5. コピーされた URL をシークレットウィンドウで開き、ダウンロードできることを確認する
+2. 初回だけ exe が作成され、自動で起動する
+3. 初回表示された `設定` 画面に OCI の値を入れる
+4. `設定を保存` を押す
+5. `アップロード` で実際にファイルを1つアップロードする
+6. コピーされた URL をシークレットウィンドウで開き、ダウンロードできることを確認する
+
+2回目以降は `Start-ShareClip.bat` が作成済みの exe をそのまま起動します。
 
 コマンドだけで OCI 接続を切り分けたい場合は、任意で `config/shareclip.config.local.json` を作って `npm run storage:check` を実行します。`storage:check` はバケット接続、アップロード、署名付きURL生成、ダウンロード、削除まで確認します。
 

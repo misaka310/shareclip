@@ -3,10 +3,22 @@ setlocal
 cd /d "%~dp0"
 title ShareClip
 
+set "APP_EXE=release\ShareClip-win32-x64\ShareClip.exe"
+
 echo.
 echo ========================================
-echo  ShareClip start
+echo  ShareClip
 echo ========================================
+echo.
+
+if exist "%APP_EXE%" (
+  echo [INFO] Starting existing app.
+  start "" "%APP_EXE%"
+  exit /b 0
+)
+
+echo [INFO] ShareClip.exe was not found.
+echo [INFO] Running first-time setup and build.
 echo.
 
 where node >nul 2>nul
@@ -37,7 +49,7 @@ if not exist package.json (
 )
 
 if not exist node_modules\electron\package.json (
-  echo [INFO] Running first-time setup. This may take a few minutes.
+  echo [INFO] Installing dependencies. This may take a few minutes.
   call npm install
   if errorlevel 1 (
     echo.
@@ -50,16 +62,27 @@ if not exist node_modules\electron\package.json (
 )
 
 echo.
-echo [INFO] Starting ShareClip.
-echo On first run, enter your OCI settings in the Settings screen and save them.
+echo [INFO] Building ShareClip.exe.
 echo.
-
-call npm run dev
+call npm run dist
 if errorlevel 1 (
   echo.
-  echo [ERROR] ShareClip failed to start.
+  echo [ERROR] Build failed.
   pause
   exit /b 1
 )
 
+if not exist "%APP_EXE%" (
+  echo.
+  echo [ERROR] Build finished, but %APP_EXE% was not found.
+  pause
+  exit /b 1
+)
+
+echo.
+echo [OK] ShareClip.exe is ready.
+echo [INFO] Starting ShareClip.
+echo On first run, enter your OCI settings in the Settings screen and save them.
+echo.
+start "" "%APP_EXE%"
 exit /b 0
