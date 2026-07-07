@@ -24,7 +24,7 @@ export function SettingsPanel({ initialConfig, sourceLabel, busy, onSave }: Sett
       <div className="section-heading section-heading--row">
         <div>
           <h2>設定</h2>
-          <p>Oracle Object Storage の接続情報を設定します。</p>
+          <p>この画面に必要な値を入力して保存します。</p>
         </div>
         <span className="badge">{sourceLabel}</span>
       </div>
@@ -32,15 +32,15 @@ export function SettingsPanel({ initialConfig, sourceLabel, busy, onSave }: Sett
       <div className="settings-grid">
         <label>
           Endpoint
-          <input value={form.endpoint} onChange={(event) => updateField('endpoint', event.target.value)} />
+          <input placeholder="https://<namespace>.compat.objectstorage.<region>.oraclecloud.com" value={form.endpoint} onChange={(event) => updateField('endpoint', event.target.value)} />
         </label>
         <label>
           Region
-          <input value={form.region} onChange={(event) => updateField('region', event.target.value)} />
+          <input placeholder="ap-osaka-1" value={form.region} onChange={(event) => updateField('region', event.target.value)} />
         </label>
         <label>
           Bucket
-          <input value={form.bucket} onChange={(event) => updateField('bucket', event.target.value)} />
+          <input placeholder="shareclip" value={form.bucket} onChange={(event) => updateField('bucket', event.target.value)} />
         </label>
         <label>
           Access Key ID
@@ -56,7 +56,7 @@ export function SettingsPanel({ initialConfig, sourceLabel, busy, onSave }: Sett
         </label>
         <label>
           Key Prefix
-          <input value={form.keyPrefix} onChange={(event) => updateField('keyPrefix', event.target.value)} />
+          <input placeholder="shareclip/" value={form.keyPrefix} onChange={(event) => updateField('keyPrefix', event.target.value)} />
         </label>
         <label>
           Signed URL Max Seconds

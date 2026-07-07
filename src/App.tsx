@@ -64,7 +64,12 @@ export default function App() {
         setConfigSource(state.config.source);
         setHistory(state.history);
         setLatestShared(state.history[0] ?? null);
-        setStatus({ tone: 'success', message: '設定と履歴を読み込みました。' });
+        if (validateConfig(state.config.config).length > 0) {
+          setActiveSection('settings');
+          setStatus({ tone: 'idle', message: '最初に設定画面で OCI 情報を入力して保存してください。' });
+        } else {
+          setStatus({ tone: 'success', message: '設定と履歴を読み込みました。' });
+        }
       } catch (error) {
         setStatus({
           tone: 'error',
