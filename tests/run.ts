@@ -8,7 +8,10 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import App from '../src/App';
 import { ShareLinkCard } from '../src/components/ShareLinkCard';
 import { HistoryPanel } from '../src/components/HistoryPanel';
-import type { ExpiryDays, HistoryEntry, ShareClipConfig } from '../shared/types';
+import { SettingsPanel } from '../src/components/SettingsPanel';
+import { SettingsStatus } from '../src/components/SettingsStatus';
+import { UploadPanel } from '../src/components/UploadPanel';
+import type { ExpiryDays, HistoryEntry, ShareClipConfig, UploadInput } from '../shared/types';
 
 const baseEntry = (id: string, uploadedAt: string): HistoryEntry => ({
   id,
@@ -135,7 +138,7 @@ function testRendererShell() {
   assert.match(markup, /履歴/);
   assert.match(markup, /設定/);
   assert.match(markup, /ファイルをドラッグ&amp;ドロップ/);
-  assert.match(markup, /アップロードしてリンク生成/);
+  assert.match(markup, /設定完了後にアップロードできます/);
   assert.match(markup, /最近のアップロード/);
   assert.doesNotMatch(markup, /コピーしました/);
 
@@ -163,6 +166,48 @@ function testRendererShell() {
   assert.match(historyPanel, /コピーしました/);
 }
 
+function testFirstRunUxComponents() {
+  const settings = renderToStaticMarkup(
+    createElement(SettingsPanel, {
+      initialConfig: defaultConfig,
+      sourceLabel: '初期値',
+      busy: false,
+      onSave: async (_nextConfig: ShareClipConfig) => undefined
+    })
+  );
+  assert.match(settings, /入力が必要な項目があります/);
+  assert.match(settings, /Endpoint を入力してください/);
+  assert.match(settings, /未入力があります/);
+  assert.match(settings, /disabled=""/);
+
+  const status = renderToStaticMarkup(createElement(SettingsStatus, { config: defaultConfig, sourceLabel: '初期値' }));
+  assert.match(status, /Endpoint を入力してください/);
+
+  const uploadInput: UploadInput = {
+    filePath: 'C:/tmp/example.txt',
+    fileName: 'example.txt',
+    contentType: 'text/plain',
+    size: 10,
+    expiryDays: 7
+  };
+  const upload = renderToStaticMarkup(
+    createElement(UploadPanel, {
+      file: uploadInput,
+      expiryDays: 7,
+      busy: false,
+      storageReady: false,
+      onPick: async () => undefined,
+      onUpload: async () => undefined,
+      onChangeExpiry: (_value: ExpiryDays) => undefined,
+      onDropFile: (_file: UploadInput) => undefined,
+      onOpenSettings: () => undefined
+    })
+  );
+  assert.match(upload, /先に設定を完了してください/);
+  assert.match(upload, /設定を開く/);
+  assert.match(upload, /disabled=""/);
+}
+
 function testWindowsBatEntryPoints() {
   assert.equal(existsSync('Start-ShareClip.bat'), true);
   assert.equal(existsSync('tools/Build-ShareClip.bat'), true);
@@ -184,6 +229,7 @@ async function main() {
   testConfigHelpers();
   testHistoryHelpers();
   testRendererShell();
+  testFirstRunUxComponents();
   testWindowsBatEntryPoints();
   console.log('ShareClip tests passed.');
 }

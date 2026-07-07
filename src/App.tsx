@@ -41,7 +41,8 @@ export default function App() {
   const [copiedEntryId, setCopiedEntryId] = useState<string | null>(null);
   const copyNoticeTimerRef = useRef<number | null>(null);
 
-  const storageReady = useMemo(() => validateConfig(config).length === 0, [config]);
+  const configErrors = useMemo(() => validateConfig(config), [config]);
+  const storageReady = configErrors.length === 0;
 
   const showCopiedNotice = (entryId: string) => {
     if (copyNoticeTimerRef.current) {
@@ -109,8 +110,17 @@ export default function App() {
     setStatus({ tone: 'idle', message: `${selected.fileName} を追加しました。` });
   };
 
+  const openSettings = () => {
+    setActiveSection('settings');
+  };
+
   const uploadFile = async () => {
     if (!file) return;
+    if (!storageReady) {
+      setActiveSection('settings');
+      setStatus({ tone: 'error', message: 'アップロード前に設定画面で OCI 情報を保存してください。' });
+      return;
+    }
 
     setUploadBusy(true);
     try {
@@ -133,7 +143,8 @@ export default function App() {
       const result = await assertBridge().saveConfig(nextConfig);
       setConfig(result.config);
       setConfigSource(result.source);
-      setStatus({ tone: 'success', message: '設定を保存しました。' });
+      setStatus({ tone: 'success', message: '設定を保存しました。アップロードを開始できます。' });
+      setActiveSection('upload');
     } catch (error) {
       setStatus({ tone: 'error', message: error instanceof Error ? error.message : '設定保存に失敗しました。' });
     } finally {
@@ -210,10 +221,12 @@ export default function App() {
               file={file}
               expiryDays={expiryDays}
               busy={uploadBusy || pickBusy}
+              storageReady={storageReady}
               onPick={pickFile}
               onUpload={uploadFile}
               onChangeExpiry={setExpiryDays}
               onDropFile={prepareDroppedFile}
+              onOpenSettings={openSettings}
             />
             <ShareLinkCard
               entry={latestShared}

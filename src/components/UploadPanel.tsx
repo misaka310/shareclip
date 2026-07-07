@@ -4,10 +4,12 @@ interface UploadPanelProps {
   file: UploadInput | null;
   expiryDays: ExpiryDays;
   busy: boolean;
+  storageReady: boolean;
   onPick: () => Promise<void>;
   onUpload: () => Promise<void>;
   onChangeExpiry: (value: ExpiryDays) => void;
   onDropFile: (file: UploadInput) => void;
+  onOpenSettings: () => void;
 }
 
 function formatSize(size: number): string {
@@ -15,7 +17,17 @@ function formatSize(size: number): string {
   return `${Math.ceil(size / 1024)} KB`;
 }
 
-export function UploadPanel({ file, expiryDays, busy, onPick, onUpload, onChangeExpiry, onDropFile }: UploadPanelProps) {
+export function UploadPanel({
+  file,
+  expiryDays,
+  busy,
+  storageReady,
+  onPick,
+  onUpload,
+  onChangeExpiry,
+  onDropFile,
+  onOpenSettings
+}: UploadPanelProps) {
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     const dropped = event.dataTransfer.files[0];
@@ -33,6 +45,16 @@ export function UploadPanel({ file, expiryDays, busy, onPick, onUpload, onChange
         <h1>アップロード</h1>
         <p>ファイルを一時的に共有するためのリンクを生成します。</p>
       </div>
+
+      {!storageReady ? (
+        <div className="inline-warning upload-warning" role="alert">
+          <strong>先に設定を完了してください。</strong>
+          <span>OCI の Endpoint / Bucket / Customer Secret Key を保存するとアップロードできます。</span>
+          <button className="button button--secondary" type="button" onClick={onOpenSettings} disabled={busy}>
+            設定を開く
+          </button>
+        </div>
+      ) : null}
 
       <div className="drop-zone" onDragOver={(event) => event.preventDefault()} onDrop={handleDrop}>
         <div className="upload-cloud">↑</div>
@@ -73,8 +95,8 @@ export function UploadPanel({ file, expiryDays, busy, onPick, onUpload, onChange
         </div>
       </div>
 
-      <button className="button button--primary button--wide" type="button" onClick={onUpload} disabled={busy || !file}>
-        {busy ? '処理中...' : 'アップロードしてリンク生成'}
+      <button className="button button--primary button--wide" type="button" onClick={onUpload} disabled={busy || !file || !storageReady}>
+        {busy ? '処理中...' : storageReady ? 'アップロードしてリンク生成' : '設定完了後にアップロードできます'}
       </button>
     </section>
   );

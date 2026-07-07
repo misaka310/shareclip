@@ -348,7 +348,23 @@ input {
 }
 .badge--success { background: #e8f8ee; color: #166534; }
 .badge--warning { background: #fff4d7; color: var(--yellow); }
-.inline-errors { color: #a52336; margin-bottom: 0; padding-left: 20px; }
+.inline-errors { color: #a52336; margin: 10px 0 0; padding-left: 20px; }
+.inline-warning {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff8e8;
+  color: #734d00;
+}
+.inline-warning span { color: #6b5a2b; }
+.upload-warning { align-items: start; }
+input[aria-invalid="true"] {
+  border-color: #f0a4ad;
+  background: #fff8f9;
+}
 
 @media (max-width: 980px) {
   .app-shell { grid-template-columns: 1fr; }
