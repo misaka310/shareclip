@@ -35,6 +35,7 @@ export default function App() {
     message: 'ファイルを選択してアップロードできます。'
   });
   const [uploadBusy, setUploadBusy] = useState(false);
+  const [pickBusy, setPickBusy] = useState(false);
   const [settingsBusy, setSettingsBusy] = useState(false);
   const [historyBusyId, setHistoryBusyId] = useState<string | null>(null);
 
@@ -60,11 +61,15 @@ export default function App() {
   }, []);
 
   const pickFile = async () => {
+    if (pickBusy) return;
+
+    setPickBusy(true);
     const selected = await assertBridge().chooseFile();
-    if (!selected) return;
+    if (!selected) { setPickBusy(false); return; };
 
     setFile({ ...selected, expiryDays });
     setStatus({ tone: 'idle', message: `${selected.fileName} を選択しました。` });
+    setPickBusy(false);
   };
 
   const prepareDroppedFile = (selected: UploadInput) => {
@@ -101,6 +106,19 @@ export default function App() {
       setStatus({ tone: 'error', message: error instanceof Error ? error.message : '設定保存に失敗しました。' });
     } finally {
       setSettingsBusy(false);
+    }
+  };
+
+  const copyCurrentLink = async (entryId: string) => {
+    setHistoryBusyId(entryId);
+    try {
+      const copied = await assertBridge().copyCurrentLink(entryId);
+      setLatestShared(copied);
+      setStatus({ tone: 'success', message: 'リンクをコピーしました。' });
+    } catch (error) {
+      setStatus({ tone: 'error', message: error instanceof Error ? error.message : 'リンクのコピーに失敗しました。' });
+    } finally {
+      setHistoryBusyId(null);
     }
   };
 
@@ -155,13 +173,13 @@ export default function App() {
               onChangeExpiry={setExpiryDays}
               onDropFile={prepareDroppedFile}
             />
-            <ShareLinkCard entry={latestShared} />
-            <HistoryPanel entries={history} busyId={historyBusyId} compact onCopy={copyLink} onDelete={deleteEntry} />
+            <ShareLinkCard entry={latestShared} busy={historyBusyId === latestShared?.id} onCopyCurrent={copyCurrentLink} />
+            <HistoryPanel entries={history} busyId={historyBusyId} compact onCopyCurrent={copyCurrentLink} onRegenerate={copyLink} onDelete={deleteEntry} />
           </>
         ) : null}
 
         {activeSection === 'history' ? (
-          <HistoryPanel entries={history} busyId={historyBusyId} onCopy={copyLink} onDelete={deleteEntry} />
+          <HistoryPanel entries={history} busyId={historyBusyId} onCopyCurrent={copyCurrentLink} onRegenerate={copyLink} onDelete={deleteEntry} />
         ) : null}
 
         {activeSection === 'settings' ? (

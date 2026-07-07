@@ -39,6 +39,7 @@ app.whenReady().then(async () => {
 
   const configStore = new ConfigStore(path.join(userDataDir, 'shareclip.config.json'), localConfigPath);
   const historyStore = new HistoryStore(path.join(userDataDir, 'shareclip.history.json'));
+  let isFileDialogOpen = false;
   const shareService = new ShareService({
     historyStore,
     createClient: createS3Client,
@@ -64,24 +65,33 @@ app.whenReady().then(async () => {
   });
 
   ipcMain.handle(ipcChannels.chooseFile, async () => {
-    const result = await dialog.showOpenDialog({
-      properties: ['openFile']
-    });
-
-    if (result.canceled || result.filePaths.length === 0) {
+    if (isFileDialogOpen) {
       return null;
     }
 
-    const filePath = result.filePaths[0]!;
-    const { size } = await import('node:fs/promises').then((fs) => fs.stat(filePath));
+    isFileDialogOpen = true;
+    try {
+      const result = await dialog.showOpenDialog({
+        properties: ['openFile']
+      });
 
-    return {
-      filePath,
-      fileName: path.basename(filePath),
-      contentType: 'application/octet-stream',
-      size,
-      expiryDays: 1 as ExpiryDays
-    } satisfies UploadInput;
+      if (result.canceled || result.filePaths.length === 0) {
+        return null;
+      }
+
+      const filePath = result.filePaths[0]!;
+      const { size } = await import('node:fs/promises').then((fs) => fs.stat(filePath));
+
+      return {
+        filePath,
+        fileName: path.basename(filePath),
+        contentType: 'application/octet-stream',
+        size,
+        expiryDays: 1 as ExpiryDays
+      } satisfies UploadInput;
+    } finally {
+      isFileDialogOpen = false;
+    }
   });
 
   ipcMain.handle(ipcChannels.uploadFile, async (_event, input: UploadInput) => {
@@ -93,6 +103,18 @@ app.whenReady().then(async () => {
     } catch (error) {
       throw new Error(toSafeErrorMessage(error, config));
     }
+  });
+
+  ipcMain.handle(ipcChannels.copyCurrentLink, async (_event, entryId: string) => {
+    const config = (await configStore.load()).config;
+    const history = await historyStore.list();
+    const entry = history.find((item) => item.id === entryId);
+    if (!entry) {
+      throw new Error('履歴が見つかりません。');
+    }
+
+    clipboard.writeText(entry.signedUrl);
+    return toPublicHistory([entry], config)[0];
   });
 
   ipcMain.handle(ipcChannels.copyLink, async (_event, entryId: string, expiryDays: ExpiryDays) => {

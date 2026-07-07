@@ -4,7 +4,8 @@ interface HistoryPanelProps {
   entries: HistoryEntry[];
   busyId: string | null;
   compact?: boolean;
-  onCopy: (entryId: string, expiryDays: ExpiryDays) => Promise<void>;
+  onCopyCurrent: (entryId: string) => Promise<void>;
+  onRegenerate: (entryId: string, expiryDays: ExpiryDays) => Promise<void>;
   onDelete: (entryId: string) => Promise<void>;
 }
 
@@ -13,7 +14,7 @@ function formatSize(size: number): string {
   return `${Math.ceil(size / 1024)} KB`;
 }
 
-export function HistoryPanel({ entries, busyId, compact = false, onCopy, onDelete }: HistoryPanelProps) {
+export function HistoryPanel({ entries, busyId, compact = false, onCopyCurrent, onRegenerate, onDelete }: HistoryPanelProps) {
   const visibleEntries = compact ? entries.slice(0, 3) : entries;
 
   return (
@@ -53,12 +54,16 @@ export function HistoryPanel({ entries, busyId, compact = false, onCopy, onDelet
                   <td>{new Date(entry.uploadedAt).toLocaleString()}</td>
                   <td>
                     <div className="history-actions">
+                      <button className="icon-button icon-button--primary" type="button" onClick={() => onCopyCurrent(entry.id)} disabled={busyId === entry.id}>
+                        コピー
+                      </button>
+                      <span className="history-actions__label">再発行</span>
                       {expiryOptions.map((expiry) => (
                         <button
                           key={expiry}
                           className="icon-button"
                           type="button"
-                          onClick={() => onCopy(entry.id, expiry)}
+                          onClick={() => onRegenerate(entry.id, expiry)}
                           disabled={busyId === entry.id}
                           title={`${expiry}日で再発行`}
                         >
