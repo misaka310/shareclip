@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { existsSync, readFileSync } from 'node:fs';
 import { createElement } from 'react';
 import { defaultConfig, mergeConfig, resolveConfig, sanitizeKeyPrefix, validateConfig } from '../shared/config';
 import { removeHistoryEntry, sortHistory, upsertHistoryEntry } from '../shared/history';
@@ -162,11 +163,27 @@ function testRendererShell() {
   assert.match(historyPanel, /コピーしました/);
 }
 
+function testWindowsBatEntryPoints() {
+  assert.equal(existsSync('Start-ShareClip.bat'), true);
+  assert.equal(existsSync('Build-ShareClip.bat'), true);
+
+  const startBat = readFileSync('Start-ShareClip.bat', 'utf8');
+  assert.match(startBat, /npm install/);
+  assert.match(startBat, /npm run dev/);
+  assert.match(startBat, /Node\.js/);
+
+  const buildBat = readFileSync('Build-ShareClip.bat', 'utf8');
+  assert.match(buildBat, /npm install/);
+  assert.match(buildBat, /npm run dist/);
+  assert.match(buildBat, /ShareClip\.exe/);
+}
+
 async function main() {
   await testShareService();
   testConfigHelpers();
   testHistoryHelpers();
   testRendererShell();
+  testWindowsBatEntryPoints();
   console.log('ShareClip tests passed.');
 }
 

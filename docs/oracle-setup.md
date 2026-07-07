@@ -37,7 +37,7 @@ Allow group ShareClipObjectUsers to manage objects in tenancy where target.bucke
 
 ## ShareClip側でやること
 
-1. `npm run dev` でアプリを起動する
+1. `Start-ShareClip.bat` をダブルクリックする
 2. 初回表示された `設定` 画面に OCI の値を入れる
 3. `設定を保存` を押す
 4. `アップロード` で実際にファイルを1つアップロードする

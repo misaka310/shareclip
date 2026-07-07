@@ -13,6 +13,8 @@ const required = [
   'electron/services/shareService.ts',
   'shared/config.ts',
   'shared/types.ts',
+  'Start-ShareClip.bat',
+  'Build-ShareClip.bat',
   'README.md',
   'SECURITY.md',
   'docs/usage.md',
@@ -31,6 +33,21 @@ for (const pattern of ['config/shareclip.config.local.json', '*.local.json', 'no
 const example = readFileSync('config/shareclip.config.example.json', 'utf8');
 for (const forbidden of ['secretAccessKey": "lD', 'accessKeyId": "fc', 'ocid1.']) {
   if (example.includes(forbidden)) throw new Error('Example config appears to contain real credentials.');
+}
+
+const readme = readFileSync('README.md', 'utf8');
+for (const expected of ['Start-ShareClip.bat', 'Build-ShareClip.bat', '設定画面', 'JSON 手編集は自動化や開発者向けの任意手順']) {
+  if (!readme.includes(expected)) throw new Error(`README must explain ${expected}`);
+}
+
+const startBat = readFileSync('Start-ShareClip.bat', 'utf8');
+for (const expected of ['npm install', 'npm run dev', 'Node.js']) {
+  if (!startBat.includes(expected)) throw new Error(`Start-ShareClip.bat must include ${expected}`);
+}
+
+const buildBat = readFileSync('Build-ShareClip.bat', 'utf8');
+for (const expected of ['npm install', 'npm run dist', 'ShareClip.exe']) {
+  if (!buildBat.includes(expected)) throw new Error(`Build-ShareClip.bat must include ${expected}`);
 }
 
 console.log('ShareClip validate checks passed.');
