@@ -45,6 +45,11 @@ export interface UploadInput {
 
 export interface UploadResult extends HistoryEntry {}
 
+export interface StorageConnectionCheckResult {
+  ok: true;
+  message: string;
+}
+
 export interface RendererState {
   config: ShareClipConfig;
   history: HistoryEntry[];
