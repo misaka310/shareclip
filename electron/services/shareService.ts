@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { createReadStream } from 'node:fs';
 import path from 'node:path';
-import { DeleteObjectCommand, GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { DeleteObjectCommand, GetObjectCommand, HeadBucketCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import {
@@ -31,6 +31,13 @@ export interface ShareServiceDependencies {
   signUrl: typeof getSignedUrl;
 }
 
+function assertValidConfig(config: ShareClipConfig): void {
+  const errors = validateConfig(config);
+  if (errors.length > 0) {
+    throw new Error(errors.join(' '));
+  }
+}
+
 function assertValidUpload(config: ShareClipConfig, input: UploadInput): ExpiryDays {
   const errors = validateConfig(config);
   const expiryDays = resolveExpiryDays(input.expiryDays);
@@ -49,6 +56,59 @@ function assertValidUpload(config: ShareClipConfig, input: UploadInput): ExpiryD
 
 export class ShareService {
   constructor(private readonly dependencies: ShareServiceDependencies) {}
+
+  async testConnection(config: ShareClipConfig): Promise<void> {
+    assertValidConfig(config);
+
+    const client = this.dependencies.createClient(config);
+    const key = `${sanitizeKeyPrefix(config.keyPrefix)}connection-test-${randomUUID()}.txt`;
+    const body = `shareclip connection test ${new Date().toISOString()}\n`;
+    const expiresIn = resolveSignedUrlSeconds(1, config.signedUrlBaseSeconds);
+    let uploaded = false;
+
+    try {
+      await client.send(new HeadBucketCommand({ Bucket: config.bucket }));
+
+      await client.send(
+        new PutObjectCommand({
+          Bucket: config.bucket,
+          Key: key,
+          Body: body,
+          ContentType: 'text/plain; charset=utf-8',
+          ContentDisposition: "attachment; filename*=UTF-8''shareclip-connection-test.txt"
+        })
+      );
+      uploaded = true;
+
+      const signedUrl = await this.dependencies.signUrl(
+        client,
+        new GetObjectCommand({
+          Bucket: config.bucket,
+          Key: key
+        }),
+        { expiresIn }
+      );
+
+      const response = await fetch(signedUrl);
+      if (!response.ok) {
+        throw new Error(`Connection test download failed with HTTP ${response.status}.`);
+      }
+
+      const downloaded = await response.text();
+      if (downloaded !== body) {
+        throw new Error('Connection test downloaded content did not match uploaded content.');
+      }
+    } finally {
+      if (uploaded) {
+        await client.send(
+          new DeleteObjectCommand({
+            Bucket: config.bucket,
+            Key: key
+          })
+        );
+      }
+    }
+  }
 
   async upload(config: ShareClipConfig, input: UploadInput): Promise<UploadResult> {
     const expiryDays = assertValidUpload(config, input);
@@ -98,10 +158,7 @@ export class ShareService {
   }
 
   async regenerateLink(config: ShareClipConfig, entry: HistoryEntry, expiryDaysInput: ExpiryDays): Promise<HistoryEntry> {
-    const errors = validateConfig(config);
-    if (errors.length > 0) {
-      throw new Error(errors.join(' '));
-    }
+    assertValidConfig(config);
 
     const expiryDays = resolveExpiryDays(expiryDaysInput);
     const expiresIn = resolveSignedUrlSeconds(expiryDays, config.signedUrlBaseSeconds);
@@ -127,10 +184,7 @@ export class ShareService {
   }
 
   async deleteRemote(config: ShareClipConfig, entry: HistoryEntry): Promise<void> {
-    const errors = validateConfig(config);
-    if (errors.length > 0) {
-      throw new Error(errors.join(' '));
-    }
+    assertValidConfig(config);
 
     const client = this.dependencies.createClient(config);
     await client.send(
