@@ -6,7 +6,9 @@ interface SettingsPanelProps {
   initialConfig: ShareClipConfig;
   sourceLabel: string;
   busy: boolean;
+  testBusy: boolean;
   onSave: (nextConfig: ShareClipConfig) => Promise<void>;
+  onTestConnection: (nextConfig: ShareClipConfig) => Promise<void>;
 }
 
 function formatConfigError(error: string): string {
@@ -34,10 +36,11 @@ function formatConfigError(error: string): string {
   }
 }
 
-export function SettingsPanel({ initialConfig, sourceLabel, busy, onSave }: SettingsPanelProps) {
+export function SettingsPanel({ initialConfig, sourceLabel, busy, testBusy, onSave, onTestConnection }: SettingsPanelProps) {
   const [form, setForm] = useState<ShareClipConfig>(initialConfig);
   const errors = useMemo(() => validateConfig(form), [form]);
   const hasErrors = errors.length > 0;
+  const actionBusy = busy || testBusy;
 
   useEffect(() => {
     setForm(initialConfig);
@@ -148,9 +151,14 @@ export function SettingsPanel({ initialConfig, sourceLabel, busy, onSave }: Sett
         </label>
       </div>
 
-      <button className="button button--primary" type="button" onClick={() => onSave(form)} disabled={busy || hasErrors}>
-        {busy ? '保存中...' : hasErrors ? '未入力があります' : '設定を保存'}
-      </button>
+      <div className="settings-actions">
+        <button className="button button--secondary" type="button" onClick={() => onTestConnection(form)} disabled={actionBusy || hasErrors}>
+          {testBusy ? '接続テスト中...' : hasErrors ? '接続テスト不可' : '接続テスト'}
+        </button>
+        <button className="button button--primary" type="button" onClick={() => onSave(form)} disabled={actionBusy || hasErrors}>
+          {busy ? '保存中...' : hasErrors ? '未入力があります' : '設定を保存'}
+        </button>
+      </div>
     </section>
   );
 }
