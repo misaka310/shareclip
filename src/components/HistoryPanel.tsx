@@ -15,6 +15,12 @@ function formatSize(size: number): string {
   return `${Math.ceil(size / 1024)} KB`;
 }
 
+function confirmRemoteDelete(entry: HistoryEntry): boolean {
+  return window.confirm(
+    `${entry.fileName} をOCI上から削除します。\n\nこの操作を実行すると、発行済みの共有リンクからもダウンロードできなくなります。削除しますか？`
+  );
+}
+
 export function HistoryPanel({ entries, busyId, copiedEntryId, compact = false, onCopyCurrent, onRegenerate, onDelete }: HistoryPanelProps) {
   const visibleEntries = compact ? entries.slice(0, 3) : entries;
 
@@ -77,7 +83,11 @@ export function HistoryPanel({ entries, busyId, copiedEntryId, compact = false, 
                         <button
                           className="icon-button icon-button--danger"
                           type="button"
-                          onClick={() => onDelete(entry.id)}
+                          onClick={() => {
+                            if (confirmRemoteDelete(entry)) {
+                              void onDelete(entry.id);
+                            }
+                          }}
                           disabled={busyId === entry.id}
                         >
                           削除
