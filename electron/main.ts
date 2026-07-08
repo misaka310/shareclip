@@ -64,6 +64,22 @@ app.whenReady().then(async () => {
     return toPublicConfigLoadResult(await configStore.save(mergedConfig));
   });
 
+  ipcMain.handle(ipcChannels.testConnection, async (_event, config: ShareClipConfig) => {
+    const existing = (await configStore.load()).config;
+    const mergedConfig = mergeWithExistingSecrets(existing, config);
+    assertConfig(mergedConfig);
+
+    try {
+      await shareService.testConnection(mergedConfig);
+      return {
+        ok: true,
+        message: '接続テストに成功しました。アップロード、署名付きURL生成、ダウンロード、後片付けまで確認済みです。'
+      };
+    } catch (error) {
+      throw new Error(toSafeErrorMessage(error, mergedConfig));
+    }
+  });
+
   ipcMain.handle(ipcChannels.chooseFile, async () => {
     if (isFileDialogOpen) {
       return null;
