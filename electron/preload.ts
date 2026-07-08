@@ -1,9 +1,18 @@
 import { contextBridge, ipcRenderer, webUtils } from 'electron';
-import type { ConfigLoadResult, ExpiryDays, HistoryEntry, ShareClipConfig, UploadInput, UploadResult } from '../shared/types';
+import type {
+  ConfigLoadResult,
+  ExpiryDays,
+  HistoryEntry,
+  ShareClipConfig,
+  StorageConnectionCheckResult,
+  UploadInput,
+  UploadResult
+} from '../shared/types';
 
 const ipcChannels = {
   getState: 'shareclip:get-state',
   saveConfig: 'shareclip:save-config',
+  testConnection: 'shareclip:test-connection',
   uploadFile: 'shareclip:upload-file',
   chooseFile: 'shareclip:choose-file',
   copyCurrentLink: 'shareclip:copy-current-link',
@@ -14,6 +23,7 @@ const ipcChannels = {
 interface ShareClipApi {
   getState: () => Promise<{ config: ConfigLoadResult; history: HistoryEntry[] }>;
   saveConfig: (config: ShareClipConfig) => Promise<ConfigLoadResult>;
+  testConnection: (config: ShareClipConfig) => Promise<StorageConnectionCheckResult>;
   chooseFile: () => Promise<UploadInput | null>;
   resolveDroppedFile: (file: File, expiryDays: ExpiryDays) => UploadInput | null;
   uploadFile: (input: UploadInput) => Promise<UploadResult>;
@@ -25,6 +35,7 @@ interface ShareClipApi {
 const api: ShareClipApi = {
   getState: () => ipcRenderer.invoke(ipcChannels.getState),
   saveConfig: (config) => ipcRenderer.invoke(ipcChannels.saveConfig, config),
+  testConnection: (config) => ipcRenderer.invoke(ipcChannels.testConnection, config),
   chooseFile: () => ipcRenderer.invoke(ipcChannels.chooseFile),
   resolveDroppedFile: (file, expiryDays) => {
     const filePath = webUtils.getPathForFile(file);
