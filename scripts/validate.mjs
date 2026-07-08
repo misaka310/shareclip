@@ -19,7 +19,9 @@ const required = [
   'README.md',
   'SECURITY.md',
   'docs/usage.md',
-  'docs/configuration.md'
+  'docs/configuration.md',
+  'docs/oracle-setup.md',
+  '.github/workflows/ci.yml'
 ];
 
 for (const file of required) {
@@ -37,8 +39,27 @@ for (const forbidden of ['secretAccessKey": "lD', 'accessKeyId": "fc', 'ocid1.']
 }
 
 const readme = readFileSync('README.md', 'utf8');
-for (const expected of ['Start-ShareClip.bat', 'tools\\Build-ShareClip.bat', '設定画面', '2回目以降は、既に作成済みの exe をそのまま起動します', 'JSON 手編集は自動化や開発者向けの任意手順']) {
+for (const expected of [
+  'Start-ShareClip.bat',
+  'tools\\Build-ShareClip.bat',
+  '設定画面',
+  '接続テスト',
+  '確認ダイアログ',
+  'GitHub Actions',
+  '2回目以降は、既に作成済みの exe をそのまま起動します',
+  'JSON 手編集は自動化や開発者向けの任意手順'
+]) {
   if (!readme.includes(expected)) throw new Error(`README must explain ${expected}`);
+}
+
+const security = readFileSync('SECURITY.md', 'utf8');
+for (const expected of ['PCを共有している環境', 'Customer Secret Key が漏れた場合', '接続テスト', '確認ダイアログ']) {
+  if (!security.includes(expected)) throw new Error(`SECURITY.md must explain ${expected}`);
+}
+
+const ci = readFileSync('.github/workflows/ci.yml', 'utf8');
+for (const expected of ['npm ci', 'npm run validate', 'npm run typecheck', 'npm test', 'npm run build']) {
+  if (!ci.includes(expected)) throw new Error(`CI workflow must run ${expected}`);
 }
 
 const startBat = readFileSync('Start-ShareClip.bat', 'utf8');
