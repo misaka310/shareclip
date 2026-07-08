@@ -324,6 +324,12 @@ button { border: 0; }
   gap: 16px;
   margin-bottom: 18px;
 }
+.settings-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
 label { display: grid; gap: 8px; color: #4b5563; font-weight: 700; }
 input {
   width: 100%;
