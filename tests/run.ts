@@ -164,6 +164,7 @@ function testRendererShell() {
     })
   );
   assert.match(historyPanel, /コピーしました/);
+  assert.match(historyPanel, /削除/);
 }
 
 function testFirstRunUxComponents() {
@@ -172,11 +173,14 @@ function testFirstRunUxComponents() {
       initialConfig: defaultConfig,
       sourceLabel: '初期値',
       busy: false,
-      onSave: async (_nextConfig: ShareClipConfig) => undefined
+      testBusy: false,
+      onSave: async (_nextConfig: ShareClipConfig) => undefined,
+      onTestConnection: async (_nextConfig: ShareClipConfig) => undefined
     })
   );
   assert.match(settings, /入力が必要な項目があります/);
   assert.match(settings, /Endpoint を入力してください/);
+  assert.match(settings, /接続テスト不可/);
   assert.match(settings, /未入力があります/);
   assert.match(settings, /disabled=""/);
 
