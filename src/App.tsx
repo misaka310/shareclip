@@ -37,6 +37,7 @@ export default function App() {
   const [uploadBusy, setUploadBusy] = useState(false);
   const [pickBusy, setPickBusy] = useState(false);
   const [settingsBusy, setSettingsBusy] = useState(false);
+  const [connectionTestBusy, setConnectionTestBusy] = useState(false);
   const [historyBusyId, setHistoryBusyId] = useState<string | null>(null);
   const [copiedEntryId, setCopiedEntryId] = useState<string | null>(null);
   const copyNoticeTimerRef = useRef<number | null>(null);
@@ -152,6 +153,18 @@ export default function App() {
     }
   };
 
+  const testConnection = async (nextConfig: ShareClipConfig) => {
+    setConnectionTestBusy(true);
+    try {
+      const result = await assertBridge().testConnection(nextConfig);
+      setStatus({ tone: 'success', message: result.message });
+    } catch (error) {
+      setStatus({ tone: 'error', message: error instanceof Error ? error.message : '接続テストに失敗しました。' });
+    } finally {
+      setConnectionTestBusy(false);
+    }
+  };
+
   const copyCurrentLink = async (entryId: string) => {
     setHistoryBusyId(entryId);
     try {
@@ -264,7 +277,9 @@ export default function App() {
               initialConfig={config}
               sourceLabel={sourceLabels[configSource]}
               busy={settingsBusy}
+              testBusy={connectionTestBusy}
               onSave={saveConfig}
+              onTestConnection={testConnection}
             />
           </>
         ) : null}
