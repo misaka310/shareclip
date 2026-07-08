@@ -1,0 +1,11 @@
+{
+  "endpoint": "https://<namespace>.compat.objectstorage.<region>.oraclecloud.com",
+  "region": "ap-osaka-1",
+  "bucket": "shareclip",
+  "accessKeyId": "your_customer_secret_key_access_key",
+  "secretAccessKey": "your_customer_secret_key_secret",
+  "forcePathStyle": false,
+  "keyPrefix": "shareclip/",
+  "signedUrlBaseSeconds": 604800,
+  "maxFileSizeMB": 2048
+}
