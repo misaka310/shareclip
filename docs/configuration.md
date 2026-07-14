@@ -36,7 +36,7 @@ config/shareclip.config.example.json
 
 UI で設定を保存すると、それ以降は保存済み設定が `config/shareclip.config.local.json` より優先されます。ローカルJSONを直したのに画面へ反映されない場合は、アプリ内の設定を保存し直してください。
 
-UIから設定保存した場合は、Electron の user data 側にも設定が保存されます。そこには認証情報が含まれ得るため、ローカル秘密情報として扱ってください。
+UIから設定保存した場合は、Electron の user data 側にも設定が保存されます。`secretAccessKey` は Electron `safeStorage` の非同期APIで暗号化して保存します。WindowsではDPAPIによりOSユーザー単位で保護されます。旧バージョンの平文設定は初回読み込み時に自動移行され、暗号化機能が利用できない場合は平文保存へフォールバックしません。
 
 ## バリデーション
 
