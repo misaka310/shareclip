@@ -41,15 +41,29 @@ for (const forbidden of ['secretAccessKey": "lD', 'accessKeyId": "fc', 'ocid1.']
 const readme = readFileSync('README.md', 'utf8');
 for (const expected of [
   'Start-ShareClip.bat',
-  'tools\\Build-ShareClip.bat',
-  '設定画面',
+  '`設定`画面',
   '接続テスト',
-  '確認ダイアログ',
   'GitHub Actions',
-  '2回目以降は、既に作成済みの exe をそのまま起動します',
-  'JSON 手編集は自動化や開発者向けの任意手順'
+  'docs/oracle-setup.md',
+  'docs/usage.md',
+  'docs/configuration.md',
+  'SECURITY.md'
 ]) {
-  if (!readme.includes(expected)) throw new Error(`README must explain ${expected}`);
+  if (!readme.includes(expected)) throw new Error(`README must link or explain ${expected}`);
+}
+
+if (readme.split(/\r?\n/).length > 100) {
+  throw new Error('README must remain a concise entry page of 100 lines or fewer.');
+}
+
+const usage = readFileSync('docs/usage.md', 'utf8');
+for (const expected of [
+  'tools\\Build-ShareClip.bat',
+  '2回目以降は作成済みの exe をそのまま起動します',
+  '確認ダイアログ',
+  'config/shareclip.config.local.json'
+]) {
+  if (!usage.includes(expected)) throw new Error(`docs/usage.md must explain ${expected}`);
 }
 
 const security = readFileSync('SECURITY.md', 'utf8');
