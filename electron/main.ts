@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { clipboard, app, BrowserWindow, dialog, ipcMain } from 'electron';
+import { clipboard, app, BrowserWindow, dialog, ipcMain, safeStorage } from 'electron';
 import { ipcChannels } from './ipc';
 import { ConfigStore } from './services/configStore';
 import { HistoryStore } from './services/historyStore';
@@ -37,7 +37,11 @@ app.whenReady().then(async () => {
     ? path.join(process.resourcesPath, 'config', 'shareclip.config.local.json')
     : path.join(process.cwd(), 'config', 'shareclip.config.local.json');
 
-  const configStore = new ConfigStore(path.join(userDataDir, 'shareclip.config.json'), localConfigPath);
+  const configStore = new ConfigStore(path.join(userDataDir, 'shareclip.config.json'), localConfigPath, {
+    isAvailable: () => safeStorage.isAsyncEncryptionAvailable(),
+    encrypt: (plainText) => safeStorage.encryptStringAsync(plainText),
+    decrypt: (encrypted) => safeStorage.decryptStringAsync(encrypted)
+  });
   const historyStore = new HistoryStore(path.join(userDataDir, 'shareclip.history.json'));
   let isFileDialogOpen = false;
   const shareService = new ShareService({

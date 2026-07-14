@@ -1,8 +1,12 @@
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 import { createElement } from 'react';
 import { defaultConfig, mergeConfig, resolveConfig, sanitizeKeyPrefix, validateConfig } from '../shared/config';
 import { removeHistoryEntry, sortHistory, upsertHistoryEntry } from '../shared/history';
+import { ConfigStore, type ConfigSecretStorage } from '../electron/services/configStore';
 import { buildObjectKey, resolveExpiresInSeconds, ShareService } from '../electron/services/shareService';
 import { renderToStaticMarkup } from 'react-dom/server';
 import App from '../src/App';
@@ -54,6 +58,55 @@ function testConfigHelpers() {
   const resolved = resolveConfig({ bucket: 'file-bucket' }, { bucket: 'saved-bucket' });
   assert.equal(resolved.source, 'saved');
   assert.equal(resolved.config.bucket, 'saved-bucket');
+}
+
+async function testConfigStoreProtectsSavedSecret() {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), 'shareclip-config-'));
+  const savedConfigPath = path.join(tempDir, 'shareclip.config.json');
+  const secretStorage: ConfigSecretStorage = {
+    isAvailable: async () => true,
+    encrypt: async (plainText) => Buffer.from(`protected:${plainText}`, 'utf8'),
+    decrypt: async (encrypted) => ({
+      result: encrypted.toString('utf8').replace(/^protected:/, ''),
+      shouldReEncrypt: false
+    })
+  };
+  const config: ShareClipConfig = {
+    endpoint: 'https://example.com',
+    region: 'us-ashburn-1',
+    bucket: 'shareclip-temp',
+    accessKeyId: 'key',
+    secretAccessKey: 'top-secret',
+    forcePathStyle: false,
+    keyPrefix: 'shareclip/',
+    signedUrlBaseSeconds: 86400,
+    maxFileSizeMB: 2048
+  };
+
+  try {
+    const store = new ConfigStore(savedConfigPath, undefined, secretStorage);
+    await store.save(config);
+
+    const saved = JSON.parse(await readFile(savedConfigPath, 'utf8')) as Record<string, unknown>;
+    assert.equal('secretAccessKey' in saved, false);
+    assert.equal(typeof saved.secretAccessKeyEncrypted, 'string');
+    assert.equal((await store.load()).config.secretAccessKey, 'top-secret');
+
+    await writeFile(savedConfigPath, JSON.stringify(config, null, 2), 'utf8');
+    assert.equal((await store.load()).config.secretAccessKey, 'top-secret');
+
+    const migrated = JSON.parse(await readFile(savedConfigPath, 'utf8')) as Record<string, unknown>;
+    assert.equal('secretAccessKey' in migrated, false);
+    assert.equal(typeof migrated.secretAccessKeyEncrypted, 'string');
+
+    const unavailableStore = new ConfigStore(path.join(tempDir, 'unavailable.json'), undefined, {
+      ...secretStorage,
+      isAvailable: async () => false
+    });
+    await assert.rejects(() => unavailableStore.save(config), /secure storage is unavailable/i);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
 }
 
 function testHistoryHelpers() {
@@ -230,6 +283,7 @@ function testWindowsBatEntryPoints() {
 
 async function main() {
   await testShareService();
+  await testConfigStoreProtectsSavedSecret();
   testConfigHelpers();
   testHistoryHelpers();
   testRendererShell();

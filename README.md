@@ -159,7 +159,7 @@ ShareClip storage check passed.
 
 `config/shareclip.config.local.json` はコミットしないでください。Customer Secret Key が漏れた場合は、OCIコンソールで該当キーを削除して作り直してください。
 
-アプリのUIから設定を保存すると、Electronのローカルユーザーデータディレクトリにも統合後の設定が保存されます。その保存設定には `accessKeyId` と `secretAccessKey` が含まれ得るため、app dataフォルダもローカル秘密情報として扱ってください。PCを共有している環境では、OSユーザー単位で分離して使ってください。
+アプリのUIから設定を保存すると、Electronのローカルユーザーデータディレクトリへ設定が保存されます。`secretAccessKey` は Electron `safeStorage` の非同期APIで暗号化され、WindowsではOSユーザーのDPAPI保護を利用します。旧バージョンの平文保存設定は、初回読み込み時に自動で暗号化形式へ移行し、平文項目を削除します。暗号化機能が利用できない場合は、平文へフォールバックせず保存を拒否します。
 
 設定とアップロード履歴は Windows の `%APPDATA%\ShareClip` に保存されます。これはリポジトリや配布zipには含まれません。
 
