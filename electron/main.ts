@@ -4,6 +4,7 @@ import { ipcChannels } from './ipc';
 import { ConfigStore } from './services/configStore';
 import { HistoryStore } from './services/historyStore';
 import { ShareService, createS3Client, toSafeErrorMessage } from './services/shareService';
+import { validateUploadInputFromDisk } from './services/uploadInput';
 import { mergeWithExistingSecrets, toPublicConfigLoadResult, toPublicHistory, validateConfig } from '../shared/config';
 import type { ExpiryDays, HistoryEntry, ShareClipConfig, UploadInput } from '../shared/types';
 
@@ -117,7 +118,8 @@ app.whenReady().then(async () => {
   ipcMain.handle(ipcChannels.uploadFile, async (_event, input: UploadInput) => {
     const config = (await configStore.load()).config;
     try {
-      const entry = await shareService.upload(config, input);
+      const validatedInput = await validateUploadInputFromDisk(input, config);
+      const entry = await shareService.upload(config, validatedInput);
       clipboard.writeText(entry.signedUrl);
       return toPublicHistory([entry], config)[0];
     } catch (error) {

@@ -1,7 +1,7 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import path from 'node:path';
+import { readFile } from 'node:fs/promises';
 import { mergeConfig, resolveConfig } from '../../shared/config';
 import type { ConfigLoadResult, ShareClipConfig } from '../../shared/types';
+import { writeJsonAtomically } from './atomicJsonFile';
 
 type StoredConfig = Omit<Partial<ShareClipConfig>, 'secretAccessKey'> & {
   secretAccessKey?: string;
@@ -58,8 +58,7 @@ export class ConfigStore {
   }
 
   private async writeStoredConfig(config: StoredConfig): Promise<void> {
-    await mkdir(path.dirname(this.savedConfigPath), { recursive: true });
-    await writeFile(this.savedConfigPath, JSON.stringify(config, null, 2), 'utf8');
+    await writeJsonAtomically(this.savedConfigPath, config);
   }
 
   private async loadSavedConfig(storedConfig: StoredConfig | null): Promise<Partial<ShareClipConfig> | null> {
@@ -72,7 +71,6 @@ export class ConfigStore {
     if (secretAccessKeyEncrypted) {
       await this.assertSecureStorageAvailable();
       const decrypted = await this.secretStorage.decrypt(Buffer.from(secretAccessKeyEncrypted, 'base64'));
-
       if (decrypted.shouldReEncrypt || secretAccessKey !== undefined) {
         await this.writeStoredConfig(
           await this.protectSecret({

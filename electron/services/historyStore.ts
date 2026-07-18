@@ -1,7 +1,7 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import path from 'node:path';
+import { readFile } from 'node:fs/promises';
 import { removeHistoryEntry, sortHistory, upsertHistoryEntry } from '../../shared/history';
 import type { HistoryEntry } from '../../shared/types';
+import { writeJsonAtomically } from './atomicJsonFile';
 
 async function readHistoryFile(historyPath: string): Promise<HistoryEntry[]> {
   try {
@@ -36,7 +36,6 @@ export class HistoryStore {
   }
 
   private async write(entries: HistoryEntry[]): Promise<void> {
-    await mkdir(path.dirname(this.historyPath), { recursive: true });
-    await writeFile(this.historyPath, JSON.stringify(entries, null, 2), 'utf8');
+    await writeJsonAtomically(this.historyPath, entries);
   }
 }
