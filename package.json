@@ -8,6 +8,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "npm run build && electron .",
+    "lint": "node scripts/lint.mjs",
     "typecheck": "node scripts/typecheck.mjs",
     "test": "node scripts/run-tests.mjs",
     "build:renderer": "node ./node_modules/vite/bin/vite.js build",
