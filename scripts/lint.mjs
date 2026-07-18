@@ -18,6 +18,7 @@ async function visit(directory) {
     if (!entry.isFile() || !extensions.has(path.extname(entry.name))) continue;
 
     inspectedFiles += 1;
+    if (filePath === path.join('scripts', 'lint.mjs')) continue;
     const text = await readFile(filePath, 'utf8');
     if (text.includes('@ts-ignore')) failures.push(`${filePath}: @ts-ignore is forbidden`);
     if (/\beval\s*\(/.test(text)) failures.push(`${filePath}: eval() is forbidden`);
