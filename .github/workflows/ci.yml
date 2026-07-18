@@ -26,10 +26,13 @@ jobs:
       - name: Validate repository
         run: npm run validate
 
+      - name: Lint
+        run: npm run lint
+
       - name: Typecheck
         run: npm run typecheck
 
-      - name: Test
+      - name: Test with coverage
         run: npm test
 
       - name: Build
