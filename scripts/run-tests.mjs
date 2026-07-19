@@ -15,6 +15,17 @@ for (const command of [
       '.test-dist/tests/run.js',
       '.test-dist/tests/hardening.js'
     ]
+  ],
+  [
+    'node',
+    [
+      '--test',
+      '--experimental-test-coverage',
+      '--test-coverage-include=**/atomicJsonFile.js',
+      '--test-coverage-include=**/uploadInput.js',
+      '--test-coverage-lines=90',
+      '.test-dist/tests/hardening.js'
+    ]
   ]
 ]) {
   const [bin, args] = command;
