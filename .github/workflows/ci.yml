@@ -9,6 +9,7 @@ on:
 jobs:
   check:
     runs-on: windows-latest
+    timeout-minutes: 60
 
     steps:
       - name: Checkout
