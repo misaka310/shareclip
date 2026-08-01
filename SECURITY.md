@@ -4,6 +4,19 @@
 
 ShareClip は、自分の Oracle Object Storage バケットへ一時共有ファイルを置くためのローカルデスクトップアプリです。このリポジトリには共有認証情報、ホスト型サービス、リモートテレメトリは含めません。
 
+## 保存済みシークレットのバージョン境界
+
+コミット `7223b20`（2026年7月14日）以降のShareClipは、アプリUIから保存した `secretAccessKey` をElectron `safeStorage`で暗号化し、WindowsではDPAPIでOSユーザー単位に保護します。
+
+それより前のビルドは、Electronのuser dataディレクトリにある `%APPDATA%\ShareClip\shareclip.config.json` へ `secretAccessKey` を平文で保存する場合がありました。リポジトリや配布ZIPへ自動的に含まれる問題ではありませんが、旧版を使用したPCでは次を実施してください。
+
+1. 最新の `master` またはコミット `7223b20` 以降のビルドを起動する。
+2. 既存設定を一度読み込み、平文項目が暗号化形式へ自動移行されることを確認する。
+3. `%APPDATA%\ShareClip\shareclip.config.json` に `secretAccessKey` という平文項目が残っていないことを確認する。
+4. 旧設定ファイルを他者へ共有した、バックアップへ平文のまま保存した、またはPC侵害が疑われる場合は、OCIコンソールで該当Customer Secret Keyを削除して再発行する。
+
+暗号化機能が利用できない場合、現行版は平文保存へフォールバックせず設定保存を拒否します。
+
 ## 認証情報の扱い
 
 - 実値は自分のPC上のローカル秘密情報として扱ってください。
