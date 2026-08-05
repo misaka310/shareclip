@@ -6,6 +6,12 @@ ShareClip は、自分の Oracle Cloud Infrastructure Object Storage を使っ�
 
 ファイルを選び、期限を1日・3日・7日から選ぶと、OCIへアップロードして署名付きURLを生成します。受け取る側にOCIアカウントは必要ありません。
 
+<p align="center">
+  <img src="docs/images/system-overview.png" alt="ShareClipの共有フロー概要" width="100%">
+</p>
+
+ファイルと期限を選び、OCI Object Storageへアップロードして期限付きURLを共有する流れを示しています。
+
 ## できること
 
 - ファイル選択またはドラッグ&ドロップでアップロード
