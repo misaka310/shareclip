@@ -20,3 +20,6 @@ generator.b64
 src/probe.txt
 npm-debug.log*
 .DS_Store
+
+# Local agent/tool residue
+.ai-bridge/
