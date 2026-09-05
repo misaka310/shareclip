@@ -6,6 +6,9 @@
   "main": "dist-electron/electron/main.js",
   "author": "misaka310",
   "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "npm run build && electron .",
     "lint": "node scripts/lint.mjs",
