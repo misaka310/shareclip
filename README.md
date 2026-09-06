@@ -25,9 +25,9 @@ ShareClip は、自分の Oracle Cloud Infrastructure Object Storage を使っ�
 - Windows 10 / 11
 - Node.js LTS（初回ビルド時のみ）
 - OCI Object Storageのバケット
-- 対象バケットを操作できるCustomer Secret Key
+- 対象バケットを操作できるCustomer Secret Key（対応するIAMポリシー設定が必要です）
 
-OCI側の準備は [Oracle Cloudの準備](docs/oracle-setup.md) を参照してください。
+OCI側の準備（バケット作成、IAMグループ・ポリシー設定を含む）は [Oracle Cloudの準備](docs/oracle-setup.md) を参照してください。
 
 ## 起動
 
