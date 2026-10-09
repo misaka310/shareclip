@@ -1,43 +1,17 @@
-# セキュリティポリシー
+# Security Policy
 
-## 想定用途
+## Supported version
 
-ShareClip は、自分の Oracle Object Storage バケットへ一時共有ファイルを置くためのローカルデスクトップアプリです。このリポジトリには共有認証情報、ホスト型サービス、リモートテレメトリは含めません。
+Security fixes are applied to the current default branch and the latest published release, if releases are used.
 
-## 保存済みシークレットのバージョン境界
+## Reporting a vulnerability
 
-コミット `7223b20`（2026年7月14日）以降のShareClipは、アプリUIから保存した `secretAccessKey` をElectron `safeStorage`で暗号化し、WindowsではDPAPIでOSユーザー単位に保護します。
+Do not disclose a suspected vulnerability, exploit details, credentials, tokens, private keys, or personal data in a public issue. Please use GitHub's [private vulnerability reporting form](https://github.com/misaka310/shareclip/security/advisories/new).
 
-それより前のビルドは、Electronのuser dataディレクトリにある `%APPDATA%\ShareClip\shareclip.config.json` へ `secretAccessKey` を平文で保存する場合がありました。リポジトリや配布ZIPへ自動的に含まれる問題ではありませんが、旧版を使用したPCでは次を実施してください。
+Include the affected version or commit, reproduction steps, expected impact, and the smallest proof of concept needed to validate the issue.
 
-1. 最新の `master` またはコミット `7223b20` 以降のビルドを起動する。
-2. 既存設定を一度読み込み、平文項目が暗号化形式へ自動移行されることを確認する。
-3. `%APPDATA%\ShareClip\shareclip.config.json` に `secretAccessKey` という平文項目が残っていないことを確認する。
-4. 旧設定ファイルを他者へ共有した、バックアップへ平文のまま保存した、またはPC侵害が疑われる場合は、OCIコンソールで該当Customer Secret Keyを削除して再発行する。
+## Response and disclosure timeline
 
-暗号化機能が利用できない場合、現行版は平文保存へフォールバックせず設定保存を拒否します。
+A private report will normally be acknowledged within 7 days. After validation, remediation is prioritized by severity. Coordinated public disclosure should wait until a fix is available or an agreed disclosure date is reached. If a longer investigation is required, status updates will be provided through the private advisory.
 
-## 認証情報の扱い
-
-- 実値は自分のPC上のローカル秘密情報として扱ってください。
-- リポ内で使う秘密設定ファイルは `config/shareclip.config.local.json` です。これはコミットしません。
-- コミットしてよいのは、ダミー値だけを入れた `config/shareclip.config.example.json` です。
-- アプリUIから保存した `secretAccessKey` は、Electron `safeStorage` の非同期APIで暗号化してローカル user data ディレクトリへ保存します。WindowsではDPAPIによりOSユーザー単位で保護されます。
-- 旧バージョンの平文保存設定は、初回読み込み時に暗号化形式へ自動移行して平文項目を削除します。暗号化機能が利用できない場合は平文保存へフォールバックしません。
-- PCを共有している環境では、ShareClip を使う OS ユーザーを分けてください。同じOSユーザー権限で動くプロセスやマルウェアからの読み取りまでは防げません。
-- Customer Secret Key が漏れた場合は、OCIコンソールで該当キーを削除して作り直してください。
-- 署名付きURLは、有効期限内だけ使える一時的な秘密情報として扱ってください。
-- ShareClip はローカルデスクトップアプリです。外部公開サービスとしてホストする前提ではありません。管理者にも読ませたくないファイルは、アップロード前に別途暗号化してください。
-
-## 問題を見つけた場合
-
-公開Issueに認証情報、署名付きURL、バケットの実値などを書かないでください。再現手順、影響範囲、対象ファイルだけを、秘密情報を含めずに共有してください。
-
-## ハードニングメモ
-
-- 認証情報は Electron main process 側で扱い、renderer bundle へ直接渡しません。
-- 画面に表示する設定値や履歴URLは、認証情報に見える部分をマスクします。
-- 保存設定とアップロード履歴はローカルの Electron user data ディレクトリに保存します。
-- 接続テストは、テストオブジェクトのアップロード、署名付きURL生成、ダウンロード確認、削除までを main process 側で実行します。
-- リモートオブジェクト削除前には確認ダイアログを表示します。
-- 署名付きURLの最大期限は 604800 秒、つまり7日に制限します。
+Security reports made in good faith for defensive purposes are welcome.
