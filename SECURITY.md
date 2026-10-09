@@ -41,3 +41,11 @@ ShareClip は、自分の Oracle Object Storage バケットへ一時共有フ�
 - 接続テストは、テストオブジェクトのアップロード、署名付きURL生成、ダウンロード確認、削除までを main process 側で実行します。
 - リモートオブジェクト削除前には確認ダイアログを表示します。
 - 署名付きURLの最大期限は 604800 秒、つまり7日に制限します。
+
+## Private vulnerability reporting
+
+Please report suspected vulnerabilities privately through GitHub's private vulnerability reporting form:
+https://github.com/misaka310/shareclip/security/advisories/new
+
+Do not disclose exploit details, credentials, tokens, personal data, or other sensitive information in a public issue.
+We aim to acknowledge a vulnerability report within 7 days, complete the initial assessment within 30 days, and coordinate disclosure after a fix is available, normally within 90 days. If remediation needs longer, we will communicate the revised disclosure timeline through the private report.
