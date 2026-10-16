@@ -16,6 +16,7 @@ import { SettingsPanel } from '../src/components/SettingsPanel';
 import { SettingsStatus } from '../src/components/SettingsStatus';
 import { UploadPanel } from '../src/components/UploadPanel';
 import type { ExpiryDays, HistoryEntry, ShareClipConfig, UploadInput } from '../shared/types';
+import { runFuzzProperties } from './fuzz-properties';
 
 const baseEntry = (id: string, uploadedAt: string): HistoryEntry => ({
   id,
@@ -285,6 +286,7 @@ async function main() {
   await testShareService();
   await testConfigStoreProtectsSavedSecret();
   testConfigHelpers();
+  runFuzzProperties();
   testHistoryHelpers();
   testRendererShell();
   testFirstRunUxComponents();
