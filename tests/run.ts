@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import fc from 'fast-check';
 import { createElement } from 'react';
 import { defaultConfig, mergeConfig, resolveConfig, sanitizeKeyPrefix, validateConfig } from '../shared/config';
 import { removeHistoryEntry, sortHistory, upsertHistoryEntry } from '../shared/history';
@@ -54,6 +55,14 @@ function testConfigHelpers() {
   assert.equal(sanitizeKeyPrefix('assets'), 'assets/');
   assert.equal(sanitizeKeyPrefix('assets/'), 'assets/');
   assert.equal(sanitizeKeyPrefix('   '), '');
+
+  fc.assert(
+    fc.property(fc.string(), (input) => {
+      const normalized = sanitizeKeyPrefix(input);
+      assert.ok(normalized === '' || normalized.endsWith('/'));
+      assert.equal(sanitizeKeyPrefix(normalized), normalized);
+    })
+  );
 
   const resolved = resolveConfig({ bucket: 'file-bucket' }, { bucket: 'saved-bucket' });
   assert.equal(resolved.source, 'saved');
