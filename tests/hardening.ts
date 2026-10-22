@@ -96,7 +96,19 @@ async function testUploadInputIsRevalidatedFromDisk(): Promise<void> {
   }
 }
 
+async function testElectronRendererSecurityBoundaries(): Promise<void> {
+  const mainSource = await readFile('electron/main.ts', 'utf8');
+  assert.match(mainSource, /contextIsolation:\s*true/);
+  assert.match(mainSource, /nodeIntegration:\s*false/);
+  assert.match(mainSource, /sandbox:\s*true/);
+  assert.match(mainSource, /webSecurity:\s*true/);
+  assert.match(mainSource, /setWindowOpenHandler\(\(\)\s*=>\s*\(\{\s*action:\s*'deny'\s*\}\)\)/);
+  assert.match(mainSource, /webContents\.on\('will-navigate'/);
+  assert.match(mainSource, /event\.preventDefault\(\)/);
+}
+
 async function main(): Promise<void> {
+  await testElectronRendererSecurityBoundaries();
   await testAtomicJsonReplacement();
   await testAtomicJsonCleansUpAfterSerializationFailure();
   await testUploadInputIsRevalidatedFromDisk();
