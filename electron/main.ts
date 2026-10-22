@@ -18,8 +18,17 @@ async function createWindow(): Promise<void> {
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      sandbox: true,
+      webSecurity: true
     }
+  });
+
+  // This desktop app renders only a bundled local page. Never let its privileged
+  // preload bridge become available to an external document or popup.
+  window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  window.webContents.on('will-navigate', (event) => {
+    event.preventDefault();
   });
 
   await window.loadFile(path.join(__dirname, '..', '..', 'dist', 'index.html'));
