@@ -47,6 +47,7 @@ Start-ShareClip.bat
 
 - `config/shareclip.config.local.json` はGit管理対象外です
 - UIから保存した`secretAccessKey`はElectron `safeStorage`で暗号化します
+- Electronのウィンドウはsandbox・context isolationを有効にし、外部URLへの画面遷移・ポップアップを拒否します。Node.jsのセキュリティ修正版を含むElectronが公開され次第、組み込みランタイムを更新します。
 - WindowsではOSユーザー単位のDPAPI保護を利用します
 - 旧バージョンの平文設定は初回読み込み時に自動移行します
 - 暗号化機能が利用できない場合、平文では保存しません
