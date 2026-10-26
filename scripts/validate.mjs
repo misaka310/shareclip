@@ -33,9 +33,18 @@ for (const pattern of ['config/shareclip.config.local.json', '*.local.json', 'no
   if (!gitignore.includes(pattern)) throw new Error(`.gitignore must include ${pattern}`);
 }
 
-const example = readFileSync('config/shareclip.config.example.json', 'utf8');
-for (const forbidden of ['secretAccessKey": "lD', 'accessKeyId": "fc', 'ocid1.']) {
-  if (example.includes(forbidden)) throw new Error('Example config appears to contain real credentials.');
+// Example configuration must contain placeholders, never account-specific credentials.
+const example = JSON.parse(readFileSync('config/shareclip.config.example.json', 'utf8'));
+for (const field of ['accessKeyId', 'secretAccessKey']) {
+  const value = example[field];
+  if (typeof value !== 'string' || !/^(?:your|example|placeholder)_[a-z0-9_]+$/i.test(value)) {
+    throw new Error(`Example config must use a placeholder for ${field}.`);
+  }
+}
+for (const value of Object.values(example)) {
+  if (typeof value === 'string' && /ocid1\\.[a-z0-9_.-]{10,}/i.test(value)) {
+    throw new Error('Example config must not contain a real OCI resource ID.');
+  }
 }
 
 const readme = readFileSync('README.md', 'utf8');
