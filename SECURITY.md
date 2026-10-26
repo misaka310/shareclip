@@ -22,6 +22,7 @@ ShareClip は、自分の Oracle Object Storage バケットへ一時共有フ�
 - 実値は自分のPC上のローカル秘密情報として扱ってください。
 - リポ内で使う秘密設定ファイルは `config/shareclip.config.local.json` です。これはコミットしません。
 - コミットしてよいのは、ダミー値だけを入れた `config/shareclip.config.example.json` です。
+- `npm run validate` はサンプル設定の認証情報をプレースホルダー形式に限定し、OCIの実リソースIDらしい値を拒否します。旧キーの断片を検査コードに埋め込みません。
 - アプリUIから保存した `secretAccessKey` は、Electron `safeStorage` の非同期APIで暗号化してローカル user data ディレクトリへ保存します。WindowsではDPAPIによりOSユーザー単位で保護されます。
 - 旧バージョンの平文保存設定は、初回読み込み時に暗号化形式へ自動移行して平文項目を削除します。暗号化機能が利用できない場合は平文保存へフォールバックしません。
 - PCを共有している環境では、ShareClip を使う OS ユーザーを分けてください。同じOSユーザー権限で動くプロセスやマルウェアからの読み取りまでは防げません。
