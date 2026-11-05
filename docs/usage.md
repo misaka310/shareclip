@@ -27,7 +27,7 @@ npm run dev
 4. `設定を保存` を押す
 5. `アップロード` に戻る
 
-設定は Electron の user data に保存されます。`config/shareclip.config.local.json` を手で作る方法もありますが、これは自動化や開発者向けの任意手順です。
+設定は Electron の user data に保存されます。`config/shareclip.config.local.json` を手で作る方法もありますが、これは自動化や開発者向けの任意手順です。置き場所は [設定リファレンス](configuration.md) を参照してください。
 
 ## アップロード
 

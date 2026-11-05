@@ -158,7 +158,7 @@ async function testShareService() {
         return [entry];
       }
     } as never,
-    createClient: () => ({}) as never,
+    createClient: () => ({ send: async () => ({}) }) as never,
     signUrl: async () => 'https://signed.example.com/file'
   });
 

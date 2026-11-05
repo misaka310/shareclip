@@ -1,41 +1,42 @@
-import { readFile } from 'node:fs/promises';
 import { removeHistoryEntry, sortHistory, upsertHistoryEntry } from '../../shared/history';
 import type { HistoryEntry } from '../../shared/types';
 import { writeJsonAtomically } from './atomicJsonFile';
+import { readJsonOrQuarantine, SerialQueue } from './jsonFileRecovery';
 
-async function readHistoryFile(historyPath: string): Promise<HistoryEntry[]> {
-  try {
-    const content = await readFile(historyPath, 'utf8');
-    return sortHistory(JSON.parse(content) as HistoryEntry[]);
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-      return [];
-    }
-
-    throw error;
-  }
+function isHistoryArray(value: unknown): value is HistoryEntry[] {
+  return Array.isArray(value);
 }
 
 export class HistoryStore {
+  // upsert/remove are read-modify-write; IPC handlers run concurrently, so every
+  // file access goes through one queue to keep a later write from dropping or
+  // resurrecting entries written by an earlier one.
+  private readonly queue = new SerialQueue();
+
   constructor(private readonly historyPath: string) {}
 
-  async list(): Promise<HistoryEntry[]> {
-    return readHistoryFile(this.historyPath);
+  list(): Promise<HistoryEntry[]> {
+    return this.queue.run(() => this.read());
   }
 
-  async upsert(entry: HistoryEntry): Promise<HistoryEntry[]> {
-    const next = upsertHistoryEntry(await this.list(), entry);
-    await this.write(next);
-    return next;
+  upsert(entry: HistoryEntry): Promise<HistoryEntry[]> {
+    return this.queue.run(async () => {
+      const next = upsertHistoryEntry(await this.read(), entry);
+      await writeJsonAtomically(this.historyPath, next);
+      return next;
+    });
   }
 
-  async remove(entryId: string): Promise<HistoryEntry[]> {
-    const next = removeHistoryEntry(await this.list(), entryId);
-    await this.write(next);
-    return next;
+  remove(entryId: string): Promise<HistoryEntry[]> {
+    return this.queue.run(async () => {
+      const next = removeHistoryEntry(await this.read(), entryId);
+      await writeJsonAtomically(this.historyPath, next);
+      return next;
+    });
   }
 
-  private async write(entries: HistoryEntry[]): Promise<void> {
-    await writeJsonAtomically(this.historyPath, entries);
+  private async read(): Promise<HistoryEntry[]> {
+    const result = await readJsonOrQuarantine(this.historyPath, isHistoryArray);
+    return result.status === 'ok' ? sortHistory(result.value) : [];
   }
 }

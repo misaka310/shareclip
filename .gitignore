@@ -13,11 +13,6 @@ config/shareclip.local.json
 
 # Local/generated scratch files
 docs/superpowers/
-=.npm-cache/
-=/
--c/
-generator.b64
-src/probe.txt
 npm-debug.log*
 .DS_Store
 
