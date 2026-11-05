@@ -14,3 +14,8 @@ export function upsertHistoryEntry(entries: HistoryEntry[], entry: HistoryEntry)
 export function removeHistoryEntry(entries: HistoryEntry[], entryId: string): HistoryEntry[] {
   return entries.filter((entry) => entry.id !== entryId);
 }
+
+export function isSignedUrlExpired(entry: Pick<HistoryEntry, 'signedUrlExpiresAt'>, now = Date.now()): boolean {
+  const expiresAt = Date.parse(entry.signedUrlExpiresAt);
+  return !Number.isFinite(expiresAt) || expiresAt <= now;
+}

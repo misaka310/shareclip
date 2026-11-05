@@ -17,7 +17,7 @@
     "build:renderer": "node ./node_modules/vite/bin/vite.js build",
     "build:electron": "node ./node_modules/typescript/lib/tsc.js -p tsconfig.electron.json",
     "build": "node scripts/build.mjs",
-    "dist": "npm.cmd run build && node scripts/package-win.mjs",
+    "dist": "node scripts/build.mjs && node scripts/package-win.mjs",
     "validate": "node scripts/validate.mjs",
     "storage:check": "node scripts/storage-check.mjs",
     "smoke:oci": "node scripts/storage-check.mjs"
@@ -26,8 +26,6 @@
     "@aws-sdk/client-s3": "^3.840.0",
     "@aws-sdk/lib-storage": "^3.840.0",
     "@aws-sdk/s3-request-presigner": "^3.1152.0",
-    "clsx": "^2.1.1",
-    "electron-store": "^12.0.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },
@@ -37,7 +35,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^6.1.2",
-    "electron": "^44.9.1",
+    "electron": "^44.10.2",
     "fast-check": "^4.10.2",
     "typescript": "^5.8.3",
     "vite": "^8.3.4"

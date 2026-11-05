@@ -1,7 +1,14 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { createReadStream } from 'node:fs';
 import path from 'node:path';
-import { DeleteObjectCommand, GetObjectCommand, HeadBucketCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  HeadBucketCommand,
+  HeadObjectCommand,
+  PutObjectCommand,
+  S3Client
+} from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import {
@@ -54,6 +61,25 @@ function assertValidUpload(config: ShareClipConfig, input: UploadInput): ExpiryD
   return expiryDays;
 }
 
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+/**
+ * Keeps the original failure as the reported error and attaches a cleanup
+ * failure to it, so a failed delete in a finally/catch block never hides the
+ * root cause (for example invalid credentials).
+ */
+export function withCleanupFailure(primary: unknown, cleanupError: unknown, cleanupLabel: string): Error {
+  const message = `${errorMessage(primary)} (${cleanupLabel} also failed: ${errorMessage(cleanupError)})`;
+  return new Error(message, { cause: primary });
+}
+
+function isNotFoundError(error: unknown): boolean {
+  const candidate = error as { name?: string; $metadata?: { httpStatusCode?: number } } | null;
+  return candidate?.name === 'NotFound' || candidate?.name === 'NoSuchKey' || candidate?.$metadata?.httpStatusCode === 404;
+}
+
 export class ShareService {
   constructor(private readonly dependencies: ShareServiceDependencies) {}
 
@@ -65,6 +91,7 @@ export class ShareService {
     const body = `shareclip connection test ${new Date().toISOString()}\n`;
     const expiresIn = resolveSignedUrlSeconds(1, config.signedUrlBaseSeconds);
     let uploaded = false;
+    let primaryError: unknown;
 
     try {
       await client.send(new HeadBucketCommand({ Bucket: config.bucket }));
@@ -98,14 +125,25 @@ export class ShareService {
       if (downloaded !== body) {
         throw new Error('Connection test downloaded content did not match uploaded content.');
       }
+    } catch (error) {
+      primaryError = error;
+      throw error;
     } finally {
       if (uploaded) {
-        await client.send(
-          new DeleteObjectCommand({
-            Bucket: config.bucket,
-            Key: key
-          })
-        );
+        try {
+          await client.send(
+            new DeleteObjectCommand({
+              Bucket: config.bucket,
+              Key: key
+            })
+          );
+        } catch (cleanupError) {
+          // Throwing from finally replaces the in-flight error, so report the
+          // original failure first and keep the cleanup failure alongside it.
+          throw primaryError === undefined
+            ? cleanupError
+            : withCleanupFailure(primaryError, cleanupError, 'Deleting the connection test file');
+        }
       }
     }
   }
@@ -127,34 +165,51 @@ export class ShareService {
       }
     }).done();
 
-    const signedUrl = await this.dependencies.signUrl(
-      client,
-      new GetObjectCommand({
-        Bucket: config.bucket,
-        Key: objectKey
-      }),
-      { expiresIn }
-    );
+    // The object now exists in the bucket. If signing or saving history fails,
+    // delete it again so it does not become an orphan the app cannot list and a
+    // retry does not upload a second copy.
+    try {
+      const signedUrl = await this.dependencies.signUrl(
+        client,
+        new GetObjectCommand({
+          Bucket: config.bucket,
+          Key: objectKey
+        }),
+        { expiresIn }
+      );
 
-    const uploadedAt = new Date().toISOString();
-    const signedUrlExpiresAt = new Date(Date.now() + expiresIn * 1000).toISOString();
+      const uploadedAt = new Date().toISOString();
+      const signedUrlExpiresAt = new Date(Date.now() + expiresIn * 1000).toISOString();
 
-    const entry: UploadResult = {
-      id: randomUUID(),
-      fileName: input.fileName,
-      filePath: input.filePath,
-      objectKey,
-      bucket: config.bucket,
-      contentType: input.contentType || 'application/octet-stream',
-      size: input.size,
-      uploadedAt,
-      expiryDays,
-      signedUrl,
-      signedUrlExpiresAt
-    };
+      const entry: UploadResult = {
+        id: randomUUID(),
+        fileName: input.fileName,
+        filePath: input.filePath,
+        objectKey,
+        bucket: config.bucket,
+        contentType: input.contentType || 'application/octet-stream',
+        size: input.size,
+        uploadedAt,
+        expiryDays,
+        signedUrl,
+        signedUrlExpiresAt
+      };
 
-    await this.dependencies.historyStore.upsert(entry);
-    return entry;
+      await this.dependencies.historyStore.upsert(entry);
+      return entry;
+    } catch (error) {
+      try {
+        await client.send(
+          new DeleteObjectCommand({
+            Bucket: config.bucket,
+            Key: objectKey
+          })
+        );
+      } catch (cleanupError) {
+        throw withCleanupFailure(error, cleanupError, `Removing the uploaded object ${objectKey}`);
+      }
+      throw error;
+    }
   }
 
   async regenerateLink(config: ShareClipConfig, entry: HistoryEntry, expiryDaysInput: ExpiryDays): Promise<HistoryEntry> {
@@ -163,6 +218,20 @@ export class ShareService {
     const expiryDays = resolveExpiryDays(expiryDaysInput);
     const expiresIn = resolveSignedUrlSeconds(expiryDays, config.signedUrlBaseSeconds);
     const client = this.dependencies.createClient(config);
+
+    // Signing never contacts the bucket, so confirm the object still exists
+    // before reporting a fresh link that would only return 404.
+    try {
+      await client.send(new HeadObjectCommand({ Bucket: entry.bucket, Key: entry.objectKey }));
+    } catch (error) {
+      if (isNotFoundError(error)) {
+        throw new Error(
+          `The uploaded file no longer exists in the bucket (${entry.objectKey}). Upload it again or delete this history entry.`
+        );
+      }
+      throw error;
+    }
+
     const signedUrl = await this.dependencies.signUrl(
       client,
       new GetObjectCommand({

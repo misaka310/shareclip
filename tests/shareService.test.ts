@@ -23,7 +23,7 @@ test('share service regenerates a signed link and updates history', async () => 
         return [entry];
       }
     } as never,
-    createClient: () => ({}) as never,
+    createClient: () => ({ send: async () => ({}) }) as never,
     signUrl: async () => 'https://signed.example.com/file'
   });
 

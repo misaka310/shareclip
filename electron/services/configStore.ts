@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { mergeConfig, resolveConfig } from '../../shared/config';
 import type { ConfigLoadResult, ShareClipConfig } from '../../shared/types';
 import { writeJsonAtomically } from './atomicJsonFile';
+import { isPlainObject, readJsonOrQuarantine, SerialQueue } from './jsonFileRecovery';
 
 type StoredConfig = Omit<Partial<ShareClipConfig>, 'secretAccessKey'> & {
   secretAccessKey?: string;
@@ -17,20 +18,41 @@ export interface ConfigSecretStorage {
   }>;
 }
 
-async function readJsonFile<T>(filePath: string): Promise<T | null> {
+async function readLocalConfigFile(filePath: string): Promise<Partial<ShareClipConfig> | null> {
+  let content: string;
   try {
-    const content = await readFile(filePath, 'utf8');
-    return JSON.parse(content) as T;
+    content = await readFile(filePath, 'utf8');
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
       return null;
     }
-
     throw error;
   }
+
+  // The local file is written by hand, so never move it. Ignore it when it is
+  // unreadable instead of blocking every IPC call; saved/default config is used.
+  try {
+    const parsed: unknown = JSON.parse(content);
+    if (isPlainObject(parsed)) {
+      return parsed as Partial<ShareClipConfig>;
+    }
+  } catch (error) {
+    if (!(error instanceof SyntaxError)) throw error;
+  }
+  console.warn(`ShareClip ignored an unreadable local config file: ${filePath}`);
+  return null;
+}
+
+async function readStoredConfig(filePath: string): Promise<StoredConfig | null> {
+  const result = await readJsonOrQuarantine(filePath, (value): value is StoredConfig => isPlainObject(value));
+  return result.status === 'ok' ? result.value : null;
 }
 
 export class ConfigStore {
+  // load() can re-write the saved file (secret migration / re-encryption), so
+  // loads and saves share one queue to avoid interleaved writes.
+  private readonly queue = new SerialQueue();
+
   constructor(
     private readonly savedConfigPath: string,
     private readonly localConfigPath: string | undefined,
@@ -101,19 +123,23 @@ export class ConfigStore {
     return publicConfig;
   }
 
-  async load(): Promise<ConfigLoadResult> {
-    const fileConfig = this.localConfigPath ? await readJsonFile<Partial<ShareClipConfig>>(this.localConfigPath) : null;
-    const storedConfig = await readJsonFile<StoredConfig>(this.savedConfigPath);
-    const savedConfig = await this.loadSavedConfig(storedConfig);
-    return resolveConfig(fileConfig ?? undefined, savedConfig ?? undefined);
+  load(): Promise<ConfigLoadResult> {
+    return this.queue.run(async () => {
+      const fileConfig = this.localConfigPath ? await readLocalConfigFile(this.localConfigPath) : null;
+      const storedConfig = await readStoredConfig(this.savedConfigPath);
+      const savedConfig = await this.loadSavedConfig(storedConfig);
+      return resolveConfig(fileConfig ?? undefined, savedConfig ?? undefined);
+    });
   }
 
-  async save(config: ShareClipConfig): Promise<ConfigLoadResult> {
-    const mergedConfig = mergeConfig(config);
-    await this.writeStoredConfig(await this.protectSecret(mergedConfig));
-    return {
-      config: mergedConfig,
-      source: 'saved'
-    };
+  save(config: ShareClipConfig): Promise<ConfigLoadResult> {
+    return this.queue.run(async () => {
+      const mergedConfig = mergeConfig(config);
+      await this.writeStoredConfig(await this.protectSecret(mergedConfig));
+      return {
+        config: mergedConfig,
+        source: 'saved' as const
+      };
+    });
   }
 }

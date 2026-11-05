@@ -10,6 +10,14 @@ ShareClip は、アプリの `設定` 画面で保存した OCI 設定と、任�
 config/shareclip.config.local.json
 ```
 
+置き場所は起動方法で変わります。
+
+- `npm run dev` などリポジトリから起動する場合: リポジトリ直下の `config\shareclip.config.local.json`
+- 配布版の `ShareClip.exe` を起動する場合: `ShareClip.exe` と同じフォルダの `config\shareclip.config.local.json`（例: `release\ShareClip-win32-x64\config\shareclip.config.local.json`）
+  - `tools\Build-ShareClip.bat` などで exe を作り直すと `release` フォルダは作り直されるため、このファイルも消えます。元のファイルを別に保管してください。
+
+ファイルが JSON として読めない場合は無視され、保存済み設定または初期値で起動します（ファイル自体は変更しません）。
+
 このファイルは認証情報を含むため、Git管理対象にしません。公開用の見本は次です。
 
 ```text
@@ -37,6 +45,8 @@ config/shareclip.config.example.json
 UI で設定を保存すると、それ以降は保存済み設定が `config/shareclip.config.local.json` より優先されます。ローカルJSONを直したのに画面へ反映されない場合は、アプリ内の設定を保存し直してください。
 
 UIから設定保存した場合は、Electron の user data 側にも設定が保存されます。`secretAccessKey` は Electron `safeStorage` の非同期APIで暗号化して保存します。WindowsではDPAPIによりOSユーザー単位で保護されます。旧バージョンの平文設定は初回読み込み時に自動移行され、暗号化機能が利用できない場合は平文保存へフォールバックしません。
+
+user data 側の `shareclip.config.json` / `shareclip.history.json` が壊れて読めない場合は、同じフォルダに `*.corrupt-<日時>` として退避し、初期値・空の履歴で起動します。`設定` 画面から入力し直せば復旧できます。
 
 ## バリデーション
 

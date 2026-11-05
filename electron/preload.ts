@@ -1,14 +1,9 @@
 import { contextBridge, ipcRenderer, webUtils } from 'electron';
-import type {
-  ConfigLoadResult,
-  ExpiryDays,
-  HistoryEntry,
-  ShareClipConfig,
-  StorageConnectionCheckResult,
-  UploadInput,
-  UploadResult
-} from '../shared/types';
+import type { ipcChannels as IpcChannels, ShareClipApi } from './ipc';
 
+// The sandboxed preload can only require Electron's own modules, so the channel
+// map cannot be imported at runtime. `satisfies` makes the compiler reject any
+// key or channel name that drifts from the single definition in ipc.ts.
 const ipcChannels = {
   getState: 'shareclip:get-state',
   saveConfig: 'shareclip:save-config',
@@ -18,19 +13,7 @@ const ipcChannels = {
   copyCurrentLink: 'shareclip:copy-current-link',
   copyLink: 'shareclip:copy-link',
   deleteEntry: 'shareclip:delete-entry'
-} as const;
-
-interface ShareClipApi {
-  getState: () => Promise<{ config: ConfigLoadResult; history: HistoryEntry[] }>;
-  saveConfig: (config: ShareClipConfig) => Promise<ConfigLoadResult>;
-  testConnection: (config: ShareClipConfig) => Promise<StorageConnectionCheckResult>;
-  chooseFile: () => Promise<UploadInput | null>;
-  resolveDroppedFile: (file: File, expiryDays: ExpiryDays) => UploadInput | null;
-  uploadFile: (input: UploadInput) => Promise<UploadResult>;
-  copyCurrentLink: (entryId: string) => Promise<HistoryEntry>;
-  copyLink: (entryId: string, expiryDays: ExpiryDays) => Promise<HistoryEntry>;
-  deleteEntry: (entryId: string) => Promise<HistoryEntry[]>;
-}
+} as const satisfies typeof IpcChannels;
 
 const api: ShareClipApi = {
   getState: () => ipcRenderer.invoke(ipcChannels.getState),
