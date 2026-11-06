@@ -38,7 +38,7 @@
     "electron": "^44.10.2",
     "fast-check": "^4.10.2",
     "typescript": "^5.8.3",
-    "vite": "^8.3.4"
+    "vite": "^8.3.5"
   },
   "overrides": {
     "undici": "7.30.1"
